@@ -14,6 +14,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin(origins = "*")
@@ -54,7 +56,14 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDTO> register(@RequestBody UserRequestDTO request) {
+    public ResponseEntity<?> register(@RequestBody UserRequestDTO request) {
+        if (request.getRole() != null &&
+            (request.getRole().equalsIgnoreCase("ADMIN") ||
+             request.getRole().equalsIgnoreCase("ADMINISTRATOR") ||
+             request.getRole().equalsIgnoreCase("SYSTEM ADMIN"))) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Registration as Administrator is not permitted."));
+        }
         UserResponseDTO created = userService.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }

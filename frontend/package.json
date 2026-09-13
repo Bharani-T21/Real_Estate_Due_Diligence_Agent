@@ -33,6 +33,7 @@
     "eslint-config-next": "16.2.10",
     "happy-dom": "^20.11.2",
     "jsdom": "^30.0.1",
+    "playwright": "^1.62.1",
     "tailwindcss": "^4",
     "vitest": "^4.1.10"
   }

@@ -75,6 +75,24 @@ public class PropertyDueDiligenceServiceImpl implements PropertyDueDiligenceServ
             report.setReportUrl(reportUrl);
             report.setCompletedAt(LocalDateTime.now());
             report.setDurationMs(System.currentTimeMillis() - startMs);
+
+            // Save snapshot info
+            report.setRiskScore(riskAssessment.getRiskScore());
+            report.setRiskLevel(riskAssessment.getRiskLevel());
+
+            // Simple snapshot JSON
+            String snapshotJson = "{"
+                    + "\"propertyId\": " + propertyId + ","
+                    + "\"address\": \"" + escapeJson(property.getAddress()) + "\","
+                    + "\"city\": \"" + escapeJson(property.getCity()) + "\","
+                    + "\"state\": \"" + escapeJson(property.getState()) + "\","
+                    + "\"riskScore\": " + riskAssessment.getRiskScore() + ","
+                    + "\"riskLevel\": \"" + escapeJson(riskAssessment.getRiskLevel()) + "\","
+                    + "\"recommendation\": \"" + escapeJson(riskAssessment.getMitigationRecommendations()) + "\","
+                    + "\"comments\": \"" + escapeJson(riskAssessment.getComments()) + "\""
+                    + "}";
+            report.setReportSnapshot(snapshotJson);
+
             report = reportRepository.save(report);
 
             // Save report history entry
@@ -225,7 +243,28 @@ public class PropertyDueDiligenceServiceImpl implements PropertyDueDiligenceServ
             dto.setRequestedByEmail(r.getRequestedBy().getEmail());
             dto.setRequestedByName(r.getRequestedBy().getName());
         }
+
+        dto.setRiskScore(r.getRiskScore());
+        dto.setRiskLevel(r.getRiskLevel());
+        dto.setReportSnapshot(r.getReportSnapshot());
+
         return dto;
+    }
+
+    private String escapeJson(String input) {
+        if (input == null) return "";
+        return input.replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
+    }
+
+    private String convertFlagsToJson(java.util.List<String> flags) {
+        if (flags == null || flags.isEmpty()) return "[]";
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < flags.size(); i++) {
+            sb.append("\"").append(escapeJson(flags.get(i))).append("\"");
+            if (i < flags.size() - 1) sb.append(",");
+        }
+        sb.append("]");
+        return sb.toString();
     }
 }
 

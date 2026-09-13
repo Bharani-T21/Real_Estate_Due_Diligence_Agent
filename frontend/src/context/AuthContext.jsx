@@ -43,45 +43,48 @@ export function AuthProvider({ children }) {
         setToken(authToken);
         localStorage.setItem("token", authToken);
 
-        const userInfo = { email, name: email.split("@")[0] };
+        let userInfo = {
+          email,
+          name: email.split("@")[0],
+          role: "BUYER",
+        };
+
+        try {
+          const res = await fetch("/api/users/me", {
+            headers: { Authorization: `Bearer ${authToken}` },
+          });
+          if (res.ok) {
+            const profile = await res.json();
+            userInfo = {
+              userId: profile.userId,
+              email: profile.email,
+              name: profile.name || userInfo.name,
+              role: profile.role || "BUYER",
+            };
+          }
+        } catch (_) {}
+
         setUser(userInfo);
         localStorage.setItem("user", JSON.stringify(userInfo));
         return { success: true, data };
       }
     } catch (err) {
       console.warn("Backend auth error:", err.message);
-      // If server returned 500 (e.g. database not seeded or offline), fall back to client session token for dev testing
-      if (err.message.includes("500") || err.message.includes("Server 500")) {
-        const mockToken = "mock_jwt_dev_token_" + Date.now();
-        const userInfo = { email, name: email.split("@")[0] };
-        setToken(mockToken);
-        setUser(userInfo);
-        localStorage.setItem("token", mockToken);
-        localStorage.setItem("user", JSON.stringify(userInfo));
-        return { success: true, isDemoSession: true };
-      }
       throw err;
     }
   };
 
   const register = async (userData) => {
-    const response = await authApi.register(userData);
+    let sanitizedRole = userData.role || "BUYER";
+    if (sanitizedRole.toUpperCase().includes("ADMIN")) {
+      sanitizedRole = "BUYER";
+    }
 
-    // Set user session and generated token
-    const tokenVal = response?.token || ("jwt_token_" + Date.now());
-    const userInfo = {
-      email: userData.email,
-      name: userData.name || response?.name || userData.email.split("@")[0],
-      role: userData.role || "Buyer",
-      userId: response?.userId || Date.now(),
-    };
+    // Register returns UserResponseDTO which does not have token, so we auto login after register
+    await authApi.register({ ...userData, role: sanitizedRole });
 
-    setToken(tokenVal);
-    setUser(userInfo);
-    localStorage.setItem("token", tokenVal);
-    localStorage.setItem("user", JSON.stringify(userInfo));
-
-    return response;
+    // Auto login after registration to get JWT
+    return await login(userData.email, userData.password);
   };
 
   const logout = () => {

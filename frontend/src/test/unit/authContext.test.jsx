@@ -54,8 +54,8 @@ describe("Unit Test: AuthContext & AuthProvider Component", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      text: () => Promise.resolve(JSON.stringify({ userId: 5, name: "Jane", email: "jane@due.com", token: "reg_token_555" })),
-      json: () => Promise.resolve({ userId: 5, name: "Jane", email: "jane@due.com", token: "reg_token_555" }),
+      text: () => Promise.resolve(JSON.stringify({ userId: 5, name: "Jane", email: "jane@due.com", role: "Agent", token: "reg_token_555" })),
+      json: () => Promise.resolve({ userId: 5, name: "Jane", email: "jane@due.com", role: "Agent", token: "reg_token_555" }),
     });
 
     render(

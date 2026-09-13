@@ -18,7 +18,7 @@ export default function PropertiesPage() {
       location: "Chennai, Tamil Nadu",
       price: "₹75,00,000",
       status: "Verified Title",
-      score: "98/100 Title Score",
+      
       riskLevel: "LOW",
       image: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&q=80",
     },
@@ -28,7 +28,7 @@ export default function PropertiesPage() {
       location: "Bangalore, Karnataka",
       price: "₹55,00,000",
       status: "Verified Title",
-      score: "90/100 Title Score",
+      
       riskLevel: "LOW",
       image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=600&q=80",
     },
@@ -38,7 +38,7 @@ export default function PropertiesPage() {
       location: "Coimbatore, Tamil Nadu",
       price: "₹90,00,000",
       status: "Under Legal Review",
-      score: "65/100 Title Score",
+      
       riskLevel: "CONCERNS_FOUND",
       image: "https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=600&q=80",
     },
@@ -48,7 +48,7 @@ export default function PropertiesPage() {
       location: "Hyderabad, Telangana",
       price: "₹68,00,000",
       status: "High Risk Property",
-      score: "32/100 Title Score",
+      
       riskLevel: "HIGH_RISK",
       image: "https://images.unsplash.com/photo-1460317442991-0ec209397118?w=600&q=80",
     },
@@ -115,9 +115,6 @@ export default function PropertiesPage() {
                   <div className="property-content">
                     <div className="property-header-row">
                       <h3>{property.title}</h3>
-                      <span className={`due-diligence-score ${property.riskLevel === "HIGH_RISK" ? "score-high-risk" : property.riskLevel === "CONCERNS_FOUND" ? "score-medium-risk" : "score-low-risk"}`}>
-                        {property.score}
-                      </span>
                     </div>
 
                     <div className="property-location">
@@ -150,3 +147,4 @@ export default function PropertiesPage() {
     </ProtectedRoute>
   );
 }
+

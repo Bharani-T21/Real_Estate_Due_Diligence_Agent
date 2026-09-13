@@ -11,6 +11,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class DataInitializer implements CommandLineRunner {
 
@@ -28,47 +30,72 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // 1. Ensure ADMIN role exists
-        Role adminRole = roleRepository.findByRoleName("ADMIN")
-                .orElseGet(() -> {
-                    Role r = new Role();
-                    r.setRoleName("ADMIN");
-                    return roleRepository.save(r);
-                });
+        List<String> rolesToSeed = List.of("ADMIN", "USER", "BUYER", "AGENT", "LEGAL_REVIEWER", "BANK");
+        for (String roleName : rolesToSeed) {
+            roleRepository.findByRoleName(roleName).orElseGet(() -> {
+                Role r = new Role();
+                r.setRoleName(roleName);
+                return roleRepository.save(r);
+            });
+        }
 
-        // Ensure USER role exists
-        roleRepository.findByRoleName("USER")
-                .orElseGet(() -> {
-                    Role r = new Role();
-                    r.setRoleName("USER");
-                    return roleRepository.save(r);
-                });
+        Role adminRole = roleRepository.findByRoleName("ADMIN").get();
 
-        // 2. Ensure admin@example.com user exists and has ADMIN role
-        User adminUser = userRepository.findByEmail("admin@example.com")
-                .orElseGet(() -> {
-                    User u = new User();
-                    u.setName("System Admin");
-                    u.setEmail("admin@example.com");
-                    u.setPassword(passwordEncoder.encode("admin123"));
-                    return u;
-                });
+        User adminUser = userRepository.findByEmail("admin@example.com").orElseGet(() -> {
+            User u = new User();
+            u.setName("System Admin");
+            u.setEmail("admin@example.com");
+            u.setPassword(passwordEncoder.encode("admin123"));
+            u.setRole(adminRole);
+            return userRepository.save(u);
+        });
 
-        // Always ensure ADMIN role is set (in case user existed without a role)
-        adminUser.setRole(adminRole);
-        adminUser = userRepository.save(adminUser);
-
-        // 3. Ensure sample Property exists
-        if (propertyRepository.count() == 0) {
-            Property p1 = new Property();
-            p1.setPropertyName("Luxury Villa");
-            p1.setAddress("12 Anna Nagar East");
-            p1.setCity("Chennai");
-            p1.setState("Tamil Nadu");
-            p1.setZipCode("600040");
-            p1.setPropertyType("Residential");
-            p1.setCreatedBy(adminUser);
-            propertyRepository.save(p1);
+        if (propertyRepository.count() < 4) {
+            if (!propertyRepository.existsById(1L)) {
+                Property p1 = new Property();
+                p1.setPropertyName("Luxury Villa");
+                p1.setAddress("12, Beach Road, ECR");
+                p1.setCity("Chennai");
+                p1.setState("Tamil Nadu");
+                p1.setZipCode("600041");
+                p1.setPropertyType("Villa");
+                p1.setCreatedBy(adminUser);
+                propertyRepository.save(p1);
+            }
+            if (!propertyRepository.existsById(2L)) {
+                Property p2 = new Property();
+                p2.setPropertyName("Modern Apartment");
+                p2.setAddress("405, Silicon Heights, Outer Ring Road");
+                p2.setCity("Bangalore");
+                p2.setState("Karnataka");
+                p2.setZipCode("560103");
+                p2.setPropertyType("Apartment");
+                p2.setCreatedBy(adminUser);
+                propertyRepository.save(p2);
+            }
+            if (!propertyRepository.existsById(3L)) {
+                Property p3 = new Property();
+                p3.setPropertyName("Independent House");
+                p3.setAddress("88, Jubilee Hills, Road No. 36");
+                p3.setCity("Hyderabad");
+                p3.setState("Telangana");
+                p3.setZipCode("500033");
+                p3.setPropertyType("House");
+                p3.setCreatedBy(adminUser);
+                propertyRepository.save(p3);
+            }
+            if (!propertyRepository.existsById(4L)) {
+                Property p4 = new Property();
+                p4.setPropertyName("Premium Flat");
+                p4.setAddress("102, Green Glen Layout, Bellandur");
+                p4.setCity("Bangalore");
+                p4.setState("Karnataka");
+                p4.setZipCode("560103");
+                p4.setPropertyType("Flat");
+                p4.setCreatedBy(adminUser);
+                propertyRepository.save(p4);
+            }
         }
     }
 }
+

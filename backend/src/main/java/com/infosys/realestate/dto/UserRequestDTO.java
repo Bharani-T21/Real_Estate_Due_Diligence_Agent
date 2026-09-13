@@ -5,8 +5,16 @@ public class UserRequestDTO {
     private String name;
     private String email;
     private String password;
+    private String role;
 
     public UserRequestDTO() {
+    }
+
+    public UserRequestDTO(String name, String email, String password, String role) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.role = role;
     }
 
     public String getName() {
@@ -31,5 +39,13 @@ public class UserRequestDTO {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

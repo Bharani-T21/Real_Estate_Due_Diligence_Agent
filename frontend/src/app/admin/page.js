@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "../../components/Navbar";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import "./admin-dashboard.css";
@@ -101,7 +102,21 @@ function ThemeToggle({ darkMode, onChange }) {
 }
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [range, setRange] = useState("7d");
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    import("../../lib/api").then(({ apiFetch }) => {
+      apiFetch("/api/admin/dashboard").then(data => {
+        setDashboardData(data);
+        setLoading(false);
+      }).catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+    });
+  }, []);
 
   /* ===========================
      THEME TOGGLE STATE
@@ -142,37 +157,37 @@ export default function AdminDashboard() {
   const kpis = [
     {
       label: "Total Users",
-      value: "248",
+      value: loading ? "..." : String(dashboardData?.totalUsers ?? "—"),
       icon: <Users size={26} />,
       accent: "kpi-blue",
     },
     {
       label: "Properties Analyzed",
-      value: "1,320",
+      value: loading ? "..." : String(dashboardData?.totalProperties ?? "—"),
       icon: <Building2 size={26} />,
       accent: "kpi-indigo",
     },
     {
       label: "Reports Generated",
-      value: "856",
+      value: loading ? "..." : String(dashboardData?.totalReports ?? "—"),
       icon: <FileText size={26} />,
       accent: "kpi-green",
     },
     {
       label: "High-Risk Properties",
-      value: "42",
+      value: loading ? "..." : String(dashboardData?.riskDistribution?.HIGH ?? dashboardData?.riskDistribution?.HIGH_RISK ?? "—"),
       icon: <ShieldAlert size={26} />,
       accent: "kpi-red",
     },
     {
       label: "Pending Reviews",
-      value: "15",
+      value: loading ? "..." : String(dashboardData?.reportsByStatus?.IN_PROGRESS ?? "—"),
       icon: <Clock3 size={26} />,
       accent: "kpi-amber",
     },
     {
       label: "System Uptime",
-      value: "99.8%",
+      value: "N/A",
       icon: <Activity size={26} />,
       accent: "kpi-blue",
     },
@@ -211,29 +226,29 @@ export default function AdminDashboard() {
     { module: "GIS / Maps", success: 97 },
   ];
 
-  /* Dummy report statistics */
+  // Backend-driven report stats
   const reportStats = [
     {
-      label: "Reports Today",
-      value: "34",
+      label: "Reports Completed",
+      value: loading ? "..." : String(dashboardData?.reportsByStatus?.COMPLETED ?? "—"),
       icon: <FileBarChart size={24} />,
       accent: "kpi-blue",
     },
     {
-      label: "Reports This Week",
-      value: "212",
+      label: "Reports In Progress",
+      value: loading ? "..." : String(dashboardData?.reportsByStatus?.IN_PROGRESS ?? "—"),
       icon: <FileText size={24} />,
       accent: "kpi-indigo",
     },
     {
-      label: "Reports This Month",
-      value: "856",
+      label: "Total Reports",
+      value: loading ? "..." : String(dashboardData?.totalReports ?? "—"),
       icon: <Activity size={24} />,
       accent: "kpi-green",
     },
     {
       label: "Failed Reports",
-      value: "9",
+      value: loading ? "..." : String(dashboardData?.reportsByStatus?.FAILED ?? "—"),
       icon: <ShieldAlert size={24} />,
       accent: "kpi-red",
     },
@@ -338,19 +353,37 @@ export default function AdminDashboard() {
      (placeholder handlers using dummy alerts)
   =========================== */
   const handleGenerateReport = () => {
-    alert("Generate Report action triggered.");
+    router.push("/report");
   };
 
   const handleManageUsers = () => {
-    alert("Manage Users action triggered.");
+    router.push("/admin/users");
   };
 
   const handleViewAuditLogs = () => {
-    alert("View Audit Logs action triggered.");
+    router.push("/audit-logs");
   };
 
-  const handleExportAnalytics = () => {
-    alert("Export Analytics action triggered.");
+  const handleExportAnalytics = async () => {
+    try {
+      const { getToken } = await import("../../lib/api");
+      const token = getToken();
+      const response = await fetch("/api/admin/analytics/export", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error(`Export failed: ${response.status}`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "analytics-export.csv";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Export failed: " + err.message);
+    }
   };
 
   /* ===========================

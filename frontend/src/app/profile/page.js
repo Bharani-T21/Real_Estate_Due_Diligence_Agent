@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "../../components/Navbar";
 import SavedPropertyCard from "../../components/SavedPropertyCard";
 import { User, Mail, Phone, MapPin, ShieldCheck, Edit3, LogOut, Heart, Loader2 } from "lucide-react";
-import { apiFetch, clearToken, getToken } from "../../lib/api";
+import { apiFetch, clearToken, getToken, getUser } from "../../lib/api";
 import "./profile.css";
 
 export default function ProfilePage() {
@@ -39,20 +39,32 @@ export default function ProfilePage() {
   ];
 
   useEffect(() => {
-    // Check auth
-    if (!getToken()) {
+    // Check auth token
+    const token = getToken();
+    const localUser = getUser();
+
+    if (!token) {
       router.push("/login");
       return;
+    }
+
+    if (localUser) {
+      setUser(localUser);
     }
 
     const fetchUser = async () => {
       try {
         const data = await apiFetch("/api/users/me");
-        setUser(data);
+        if (data) {
+          const merged = { ...localUser, ...data, role: localUser?.role || "Buyer" };
+          setUser(merged);
+        }
       } catch (err) {
-        console.error("Failed to load user info:", err);
-        clearToken();
-        router.push("/login");
+        console.warn("Could not fetch backend profile, using local session profile:", err.message);
+        if (!localUser) {
+          clearToken();
+          router.push("/login");
+        }
       } finally {
         setLoading(false);
       }

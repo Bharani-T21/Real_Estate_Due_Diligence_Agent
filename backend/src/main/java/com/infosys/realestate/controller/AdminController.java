@@ -40,4 +40,38 @@ public class AdminController {
         return ResponseEntity.ok(
                 adminAnalyticsService.getReports(status, PageRequest.of(page, size)));
     }
+
+    /**
+     * GET /api/admin/analytics/export
+     * Export system analytics as a CSV file.
+     */
+    @GetMapping("/analytics/export")
+    public ResponseEntity<byte[]> exportAnalyticsCsv() {
+        DashboardAnalyticsDTO data = adminAnalyticsService.getDashboard();
+        StringBuilder csv = new StringBuilder();
+        csv.append("Metric,Value\r\n");
+        csv.append("Total Users,").append(data.getTotalUsers()).append("\r\n");
+        csv.append("Total Properties,").append(data.getTotalProperties()).append("\r\n");
+        csv.append("Total Reports,").append(data.getTotalReports()).append("\r\n");
+        if (data.getReportsByStatus() != null) {
+            data.getReportsByStatus().forEach((s, c) -> csv.append("Reports - ").append(s).append(",").append(c).append("\r\n"));
+        }
+        if (data.getRiskDistribution() != null) {
+            data.getRiskDistribution().forEach((l, c) -> csv.append("Risk - ").append(l).append(",").append(c).append("\r\n"));
+        }
+        if (data.getAuditOutcomes() != null) {
+            data.getAuditOutcomes().forEach((o, c) -> csv.append("Audit - ").append(o).append(",").append(c).append("\r\n"));
+        }
+        if (data.getAverageProcessingTimeMs() != null) {
+            csv.append("Avg Processing Time (ms),").append(data.getAverageProcessingTimeMs()).append("\r\n");
+        }
+        csv.append("Export Generated At,").append(java.time.LocalDateTime.now()).append("\r\n");
+
+        byte[] bytes = csv.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/csv; charset=UTF-8")
+                .header("Content-Disposition", "attachment; filename=analytics-export.csv")
+                .body(bytes);
+    }
 }
+

@@ -6,7 +6,6 @@ import com.infosys.realestate.entity.PropertyTaxRecord;
 import com.infosys.realestate.entity.PublicRecord;
 import com.infosys.realestate.service.PublicRecordsService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,7 +26,6 @@ public class PublicRecordsController {
      * Returns the full ownership history for a property.
      */
     @GetMapping("/{propertyId}/ownership")
-    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
     public ResponseEntity<List<OwnershipRecord>> getOwnershipHistory(@PathVariable Long propertyId) {
         List<OwnershipRecord> records = publicRecordsService.getOwnershipHistory(propertyId);
         return ResponseEntity.ok(records);
@@ -38,7 +36,6 @@ public class PublicRecordsController {
      * Returns the full property tax history for a property.
      */
     @GetMapping("/{propertyId}/tax-history")
-    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
     public ResponseEntity<List<PropertyTaxRecord>> getTaxHistory(@PathVariable Long propertyId) {
         List<PropertyTaxRecord> records = publicRecordsService.getTaxHistory(propertyId);
         return ResponseEntity.ok(records);
@@ -49,7 +46,6 @@ public class PublicRecordsController {
      * Returns all public records (liens, violations, etc.) for a property.
      */
     @GetMapping("/{propertyId}/records")
-    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
     public ResponseEntity<List<PublicRecord>> getPublicRecords(@PathVariable Long propertyId) {
         List<PublicRecord> records = publicRecordsService.getPublicRecords(propertyId);
         return ResponseEntity.ok(records);
@@ -60,7 +56,6 @@ public class PublicRecordsController {
      * Returns a combined due diligence report aggregating ownership, tax, and public records.
      */
     @GetMapping("/{propertyId}/combined-report")
-    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
     public ResponseEntity<PublicRecordsReportResponse> getCombinedReport(@PathVariable Long propertyId) {
         PublicRecordsReportResponse report = publicRecordsService.getCombinedPublicRecordsReport(propertyId);
         return ResponseEntity.ok(report);

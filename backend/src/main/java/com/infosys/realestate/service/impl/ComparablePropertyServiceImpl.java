@@ -48,18 +48,36 @@ public class ComparablePropertyServiceImpl implements ComparablePropertyService 
 
         List<ComparableProperty> compsToSave = new ArrayList<>();
 
+        BigDecimal basePrice;
+        String typeLower = pType.toLowerCase();
+        if (typeLower.contains("villa")) {
+            basePrice = new BigDecimal("7500000.00");
+        } else if (typeLower.contains("apartment")) {
+            basePrice = new BigDecimal("5500000.00");
+        } else if (typeLower.contains("house")) {
+            basePrice = new BigDecimal("8500000.00");
+        } else if (typeLower.contains("flat")) {
+            basePrice = new BigDecimal("6500000.00");
+        } else {
+            basePrice = new BigDecimal("7000000.00"); // default for other types
+        }
+
+        BigDecimal price1 = basePrice.multiply(new BigDecimal("0.95"));
+        BigDecimal price2 = basePrice.multiply(new BigDecimal("1.05"));
+        BigDecimal price3 = basePrice;
+
         // Comp 1
         ComparableProperty c1 = new ComparableProperty();
         c1.setSubjectProperty(property);
-        c1.setCompPropertyName("Grand Residency Villa");
+        c1.setCompPropertyName("Grand Residency " + pType);
         c1.setCompAddress("12 Anna Nagar East");
         c1.setCity(city);
         c1.setState(state);
         c1.setZipCode(zip);
-        c1.setSalePrice(new BigDecimal("7200000.00"));
+        c1.setSalePrice(price1);
         c1.setSaleDate(LocalDate.now().minusMonths(2));
         c1.setSquareFootage(1800.0);
-        c1.setPricePerSqFt(new BigDecimal("4000.00"));
+        c1.setPricePerSqFt(price1.divide(new BigDecimal("1800.0"), 2, java.math.RoundingMode.HALF_UP));
         c1.setDistanceInMiles(0.4);
         c1.setSimilarityScore(95);
         c1.setPropertyType(pType);
@@ -68,15 +86,15 @@ public class ComparablePropertyServiceImpl implements ComparablePropertyService 
         // Comp 2
         ComparableProperty c2 = new ComparableProperty();
         c2.setSubjectProperty(property);
-        c2.setCompPropertyName("Greenview Heights Flat");
+        c2.setCompPropertyName("Greenview Heights " + pType);
         c2.setCompAddress("45 Main Road");
         c2.setCity(city);
         c2.setState(state);
         c2.setZipCode(zip);
-        c2.setSalePrice(new BigDecimal("6800000.00"));
+        c2.setSalePrice(price2);
         c2.setSaleDate(LocalDate.now().minusMonths(4));
         c2.setSquareFootage(1750.0);
-        c2.setPricePerSqFt(new BigDecimal("3885.00"));
+        c2.setPricePerSqFt(price2.divide(new BigDecimal("1750.0"), 2, java.math.RoundingMode.HALF_UP));
         c2.setDistanceInMiles(0.8);
         c2.setSimilarityScore(90);
         c2.setPropertyType(pType);
@@ -90,10 +108,10 @@ public class ComparablePropertyServiceImpl implements ComparablePropertyService 
         c3.setCity(city);
         c3.setState(state);
         c3.setZipCode(zip);
-        c3.setSalePrice(new BigDecimal("7600000.00"));
+        c3.setSalePrice(price3);
         c3.setSaleDate(LocalDate.now().minusMonths(1));
         c3.setSquareFootage(1900.0);
-        c3.setPricePerSqFt(new BigDecimal("4000.00"));
+        c3.setPricePerSqFt(price3.divide(new BigDecimal("1900.0"), 2, java.math.RoundingMode.HALF_UP));
         c3.setDistanceInMiles(1.2);
         c3.setSimilarityScore(86);
         c3.setPropertyType(pType);

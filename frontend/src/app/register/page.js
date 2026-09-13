@@ -29,6 +29,11 @@ export default function RegisterPage() {
       return;
     }
 
+    if (role === "Admin" || role === "ADMINISTRATOR" || role === "ADMIN") {
+      setErrorMsg("Registration as Administrator is not allowed.");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setErrorMsg("Passwords do not match.");
       return;
@@ -117,7 +122,6 @@ export default function RegisterPage() {
               <option value="Agent">Real Estate Agent</option>
               <option value="Reviewer">Legal Reviewer</option>
               <option value="Bank">Financial Institution</option>
-              <option value="Admin">Administrator</option>
             </select>
 
             <Button text={submitting ? "Creating Account..." : "Create Account"} type="submit" disabled={submitting} />

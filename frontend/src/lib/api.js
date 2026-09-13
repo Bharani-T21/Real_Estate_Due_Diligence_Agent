@@ -1,5 +1,6 @@
 // ─── API Configuration ────────────────────────────────────────────────────────
-export const API_BASE = "http://localhost:8080";
+// Use empty string so requests go through Next.js proxy (avoids CORS issues)
+export const API_BASE = typeof window !== "undefined" ? "" : "http://localhost:8080";
 
 // ─── Token Helpers ────────────────────────────────────────────────────────────
 export const getToken = () => {
@@ -59,6 +60,15 @@ export async function apiFetch(path, options = {}) {
   });
 
   if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
+      if (typeof window !== "undefined") {
+        if ((token && token.startsWith("mock_")) || path !== "/api/users/me") {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          window.location.href = "/login";
+        }
+      }
+    }
     let message = `Request failed: ${res.status} ${res.statusText}`;
     try {
       const err = await res.json();
@@ -67,8 +77,7 @@ export async function apiFetch(path, options = {}) {
     throw new Error(message);
   }
 
-  // Handle 204 No Content
   if (res.status === 204) return null;
-
   return res.json();
 }
+

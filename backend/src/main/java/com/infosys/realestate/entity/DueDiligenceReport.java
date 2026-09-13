@@ -47,6 +47,15 @@ public class DueDiligenceReport {
     @Column(name = "error_message", length = 1000)
     private String errorMessage;
 
+    @Column(name = "risk_score")
+    private Integer riskScore;
+
+    @Column(name = "risk_level")
+    private String riskLevel;
+
+    @Column(name = "report_snapshot", columnDefinition = "TEXT")
+    private String reportSnapshot;
+
     public DueDiligenceReport() {}
 
     public Long getId() { return id; }
@@ -78,5 +87,14 @@ public class DueDiligenceReport {
 
     public String getErrorMessage() { return errorMessage; }
     public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
+
+    public Integer getRiskScore() { return riskScore; }
+    public void setRiskScore(Integer riskScore) { this.riskScore = riskScore; }
+
+    public String getRiskLevel() { return riskLevel; }
+    public void setRiskLevel(String riskLevel) { this.riskLevel = riskLevel; }
+
+    public String getReportSnapshot() { return reportSnapshot; }
+    public void setReportSnapshot(String reportSnapshot) { this.reportSnapshot = reportSnapshot; }
 }
 

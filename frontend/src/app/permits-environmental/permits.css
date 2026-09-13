@@ -230,3 +230,827 @@
   background: #eff6ff;
   color: #1d4ed8;
 }
+
+/* ── Certificate Modal ── */
+.cert-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 9999;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.cert-modal-content {
+  background: #ffffff;
+  border-radius: 12px;
+  width: 780px;
+  max-width: 100%;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  overflow: visible;
+}
+
+.cert-modal-actions {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  background: #f8fafc;
+  border-radius: 12px 12px 0 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.cert-print-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #334155;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.cert-close-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Certificate Document (screen) */
+.cert-document {
+  padding: 36px 40px;
+  color: #0f172a;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.cert-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.cert-badge {
+  display: inline-block;
+  background: #334155;
+  color: #f8fafc;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 5px 16px;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+
+.cert-document .cert-header h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+
+.cert-document .cert-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 10px;
+}
+
+.cert-sub {
+  font-size: 13px;
+  color: #475569;
+  margin-bottom: 3px;
+}
+
+.cert-divider {
+  height: 2px;
+  background: #334155;
+  margin: 16px 0;
+}
+
+.cert-divider-light {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 12px 0;
+}
+
+.cert-section {
+  margin-bottom: 10px;
+}
+
+.cert-section-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.cert-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.cert-table td, .cert-table th {
+  padding: 6px 10px;
+  vertical-align: top;
+  border: 1px solid #e2e8f0;
+  line-height: 1.4;
+}
+
+.cert-key {
+  width: 36%;
+  font-weight: 700;
+  color: #334155;
+  background: #f8fafc;
+}
+
+.cert-val {
+  color: #0f172a;
+}
+
+.cert-two-col .cert-key {
+  width: 22%;
+}
+
+.cert-status {
+  font-weight: 700;
+}
+
+.cert-list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.55;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cert-footer {
+  border-top: 1.5px solid #334155;
+  padding-top: 12px;
+  margin-top: 4px;
+}
+
+.cert-footer p {
+  font-size: 11.5px;
+  color: #64748b;
+  line-height: 1.5;
+  margin-bottom: 4px;
+  font-style: italic;
+}
+
+.cert-timestamp {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #334155 !important;
+  font-style: normal !important;
+}
+
+/* ── Print Styles ── */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+
+  nav,
+  header,
+  .navbar,
+  .no-print,
+  .permits-page,
+  .cert-modal-actions {
+    display: none !important;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .cert-modal-backdrop {
+    position: static !important;
+    display: block !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    backdrop-filter: none !important;
+    overflow: visible !important;
+  }
+
+  .cert-modal-content {
+    position: static !important;
+    display: block !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+
+  #printable-esa-report {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 28px 32px !important;
+    border: 2.5px solid #000000 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-sizing: border-box !important;
+    font-family: Georgia, "Times New Roman", serif !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #printable-esa-report * {
+    visibility: visible !important;
+    color: #000000 !important;
+  }
+
+  /* Header */
+  #printable-esa-report .cert-header {
+    text-align: center !important;
+    margin-bottom: 14px !important;
+  }
+
+  #printable-esa-report .cert-badge {
+    font-size: 10.5px !important;
+    padding: 4px 14px !important;
+    margin-bottom: 12px !important;
+    background: #334155 !important;
+    color: #ffffff !important;
+    border-radius: 3px !important;
+  }
+
+  #printable-esa-report .cert-header h2 {
+    font-size: 20px !important;
+    margin-bottom: 4px !important;
+    font-weight: 800 !important;
+  }
+
+  #printable-esa-report .cert-header h3 {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    margin-bottom: 8px !important;
+  }
+
+  #printable-esa-report .cert-sub {
+    font-size: 12px !important;
+    margin-bottom: 3px !important;
+  }
+
+  /* Dividers */
+  #printable-esa-report .cert-divider {
+    height: 2px !important;
+    background: #000000 !important;
+    margin: 14px 0 !important;
+  }
+
+  #printable-esa-report .cert-divider-light {
+    height: 1px !important;
+    background: #cccccc !important;
+    margin: 10px 0 !important;
+  }
+
+  /* Sections */
+  #printable-esa-report .cert-section {
+    margin-bottom: 8px !important;
+  }
+
+  #printable-esa-report .cert-section-title {
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.08em !important;
+    margin-bottom: 7px !important;
+    padding-bottom: 3px !important;
+    border-bottom: 1px solid #999999 !important;
+  }
+
+  /* Table */
+  #printable-esa-report .cert-table {
+    font-size: 12.5px !important;
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  #printable-esa-report .cert-table td,
+  #printable-esa-report .cert-table th {
+    padding: 7px 10px !important;
+    border: 1px solid #cccccc !important;
+    line-height: 1.4 !important;
+  }
+
+  #printable-esa-report .cert-table th {
+    background: #f5f5f5 !important;
+    font-weight: bold !important;
+  }
+
+  #printable-esa-report .cert-key {
+    background: #f5f5f5 !important;
+    font-weight: 700 !important;
+  }
+
+  /* List */
+  #printable-esa-report .cert-list {
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+    gap: 3px !important;
+    padding-left: 18px !important;
+  }
+
+  /* Footer */
+  #printable-esa-report .cert-footer {
+    padding-top: 10px !important;
+    margin-top: 4px !important;
+    border-top: 1.5px solid #000000 !important;
+  }
+
+  #printable-esa-report .cert-footer p {
+    font-size: 11px !important;
+    margin-bottom: 3px !important;
+  }
+
+  #printable-esa-report .cert-timestamp {
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+  }
+}
+
+@media print {
+  @page { size: A4 portrait; margin: 10mm; }
+  body { background: white !important; }
+  .no-print, nav, .navbar, header, footer, .receipt-modal-actions { display: none !important; }
+  
+  .receipt-modal-backdrop {
+    position: static !important;
+    background: none !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+  
+  .receipt-modal-content {
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    border: none !important;
+  }
+  
+  .receipt-document {
+    display: block !important;
+    width: 100% !important;
+  }
+}
+
+/* ==============================================
+   PERMITS DASHBOARD — COMPLETE CSS
+   ============================================== */
+
+/* Tab Navigation */
+.tab-navigation {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border, #e2e8f0);
+  margin-bottom: 28px;
+}
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.15s;
+}
+.tab-btn.active {
+  color: var(--primary, #5e5af5);
+  font-weight: 600;
+}
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--primary, #5e5af5);
+  border-radius: 2px 2px 0 0;
+}
+.tab-btn:hover:not(.active) {
+  color: #334155;
+  background: rgba(0,0,0,0.02);
+  border-radius: 6px 6px 0 0;
+}
+
+/* Tab Content */
+.tab-content {
+  min-height: 400px;
+}
+
+/* Search Bar */
+.search-bar-row {
+  margin-bottom: 24px;
+}
+.search-input-wrapper {
+  position: relative;
+}
+.search-input-wrapper input {
+  width: 100%;
+  padding: 12px 16px 12px 42px;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  font-size: 15px;
+  background: white;
+  color: #0f172a;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+.search-input-wrapper input:focus {
+  outline: none;
+  border-color: var(--primary, #5e5af5);
+  box-shadow: 0 0 0 3px rgba(94, 90, 245, 0.1);
+}
+.search-input-wrapper .search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+/* Permits Grid */
+.permits-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+/* Permit Card */
+.permit-card {
+  background: white;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s;
+}
+.permit-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.permit-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+}
+
+/* Permit Status Badge */
+.permit-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.permit-status.approved {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+.permit-status.pending {
+  background: #fef9c3;
+  color: #a16207;
+  border: 1px solid #fde68a;
+}
+.permit-status.rejected, .permit-status.expired, .permit-status.violation {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+.permit-status.review {
+  background: #ede9fe;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
+}
+
+.permit-id {
+  font-family: monospace;
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Permit Card Body */
+.permit-card-body {
+  padding: 18px 20px;
+}
+.permit-card-body h3 {
+  margin: 0 0 10px 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.permit-card-body .authority {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary, #5e5af5);
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0 0 12px 0;
+}
+.permit-dates {
+  display: flex;
+  gap: 24px;
+  font-size: 13px;
+  color: #334155;
+  margin-bottom: 10px;
+}
+.permit-dates span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.contractor {
+  font-size: 13px;
+  color: #475569;
+  margin: 0;
+}
+
+/* Permit Card Footer */
+.permit-card-footer {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 20px;
+  background: #f8fafc;
+  border-top: 1px solid var(--border, #e2e8f0);
+}
+.permit-notes {
+  font-size: 13px;
+  color: #475569;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* Permits Tab Container */
+.permits-tab-container {
+  padding: 4px 0;
+}
+
+/* ============================================
+   ENVIRONMENTAL TAB
+   ============================================ */
+
+.environmental-tab-container {
+  padding: 4px 0;
+}
+
+.esa-banner {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border-radius: 14px;
+  padding: 28px 32px;
+  margin-bottom: 28px;
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  color: white;
+}
+
+.esa-score-box {
+  flex-shrink: 0;
+}
+.esa-score-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  border: 3px solid rgba(255,255,255,0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.score-val {
+  font-size: 28px;
+  font-weight: 800;
+  color: white;
+  line-height: 1;
+}
+.score-lbl {
+  font-size: 10px;
+  color: rgba(255,255,255,0.7);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+.esa-banner-content {
+  flex: 1;
+}
+.esa-banner-content h2 {
+  margin: 0 0 8px 0;
+  font-size: 22px;
+  color: white;
+}
+.esa-banner-content p {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.6;
+}
+.btn-outline-white {
+  background: transparent;
+  border: 1.5px solid rgba(255,255,255,0.5);
+  color: white;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-outline-white:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+/* Env Grid */
+.env-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 900px) {
+  .env-grid { grid-template-columns: 1fr; }
+}
+
+/* Env Section Card */
+.env-section-card {
+  background: white;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.env-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+}
+.env-section-header h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.env-section-card .text-primary {
+  color: var(--primary, #5e5af5);
+}
+
+/* Env Items */
+.env-item-list {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.env-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+.env-item.clean {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.env-item.warning, .env-item.medium {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+.env-item.danger, .env-item.high, .env-item.violation {
+  background: #fff1f2;
+  border-color: #fecdd3;
+}
+.env-item.info, .env-item.compliant {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+.env-item.non-compliant {
+  background: #fff1f2;
+  border-color: #fecdd3;
+}
+.env-item-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #334155;
+}
+.env-item.clean .env-item-icon { background: #dcfce7; color: #15803d; }
+.env-item.danger .env-item-icon, .env-item.high .env-item-icon { background: #fee2e2; color: #dc2626; }
+.env-item.warning .env-item-icon, .env-item.medium .env-item-icon { background: #fef3c7; color: #d97706; }
+.env-item.compliant .env-item-icon { background: #dbeafe; color: #2563eb; }
+
+.env-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 3px;
+}
+.env-item-desc {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/* ESA Recommendation Card */
+.esa-recommendation {
+  background: white;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  padding: 24px;
+  margin-top: 20px;
+}
+.esa-recommendation h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  padding-bottom: 12px;
+  color: #0f172a;
+}
+.esa-recommendation p {
+  margin: 0;
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.7;
+}
+
+/* Print Media */
+@media print {
+  @page { size: A4 portrait; margin: 12mm 14mm; }
+  .no-print, .tab-navigation, .search-bar-row, .esa-banner .btn-outline-white,
+  nav, header, footer { display: none !important; }
+  .receipt-document {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}

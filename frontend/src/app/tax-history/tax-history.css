@@ -404,3 +404,438 @@
   border: 1px solid var(--border);
   color: var(--text-muted);
 }
+
+/* Print Action Button */
+.print-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--primary);
+  color: #ffffff;
+  border: 1px solid var(--primary);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.print-action-btn:hover {
+  background: #3730a3;
+  color: #ffffff;
+}
+
+/* Printable Receipt Modal Overlay */
+.receipt-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.receipt-modal-content {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 720px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 32px;
+  position: relative;
+}
+
+.receipt-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.receipt-print-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.receipt-close-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--bg-main);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Receipt Document Styling */
+.receipt-document {
+  background: #ffffff;
+  border: 2px solid #0f172a;
+  border-radius: var(--radius-md);
+  padding: 32px;
+  color: #0f172a;
+  font-family: inherit;
+}
+
+.receipt-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.receipt-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 4px 10px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.receipt-header h2 {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 4px;
+  color: #0f172a;
+}
+
+.receipt-sub {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 0;
+}
+
+.receipt-divider {
+  height: 2px;
+  background: #0f172a;
+  margin: 16px 0 24px 0;
+}
+
+.receipt-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.receipt-section h3 {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #475569;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 4px;
+}
+
+.receipt-section p {
+  font-size: 13.5px;
+  margin-bottom: 6px;
+  color: #1e293b;
+}
+
+.receipt-status-text {
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.receipt-status-text.paid {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.receipt-status-text.pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.receipt-status-text.overdue {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.receipt-table-wrapper {
+  margin-bottom: 24px;
+}
+
+.receipt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.receipt-table th {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 700;
+  color: #334155;
+}
+
+.receipt-table td {
+  border: 1px solid #e2e8f0;
+  padding: 10px 14px;
+  color: #0f172a;
+}
+
+.receipt-total-row td {
+  background: #f1f5f9;
+  font-size: 14px;
+  border-top: 2px solid #0f172a;
+}
+
+.receipt-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 24px;
+}
+
+.receipt-footer {
+  text-align: center;
+  font-size: 12px;
+  color: #64748b;
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 16px;
+}
+
+.receipt-timestamp {
+  margin-top: 4px;
+  font-weight: 600;
+  color: #475569;
+}
+/* Print CSS Rule — Professional A4 Municipal Tax Bill */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+
+  nav,
+  header,
+  footer,
+  .navbar,
+  .tax-page,
+  .no-print,
+  .receipt-modal-actions {
+    display: none !important;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .receipt-modal-backdrop {
+    position: static !important;
+    display: block !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    backdrop-filter: none !important;
+  }
+
+  .receipt-modal-content {
+    position: static !important;
+    display: block !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* --- Receipt container: full usable width, generous internal padding --- */
+  #printable-tax-receipt {
+    position: relative !important;
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 30px 36px !important;
+    box-shadow: none !important;
+    border: 2.5px solid #000000 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-sizing: border-box !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #printable-tax-receipt * {
+    visibility: visible !important;
+    color: #000000 !important;
+  }
+
+  /* --- Header block --- */
+  .receipt-header {
+    margin-bottom: 20px !important;
+  }
+
+  .receipt-badge {
+    font-size: 11.5px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.1em !important;
+    padding: 4px 12px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .receipt-header h2 {
+    font-size: 22px !important;
+    font-weight: 800 !important;
+    line-height: 1.25 !important;
+    margin-bottom: 6px !important;
+  }
+
+  .receipt-sub {
+    font-size: 13.5px !important;
+    line-height: 1.4 !important;
+  }
+
+  /* --- Horizontal rule divider --- */
+  .receipt-divider {
+    height: 2px !important;
+    margin: 14px 0 22px 0 !important;
+  }
+
+  /* --- Property / Ownership two-column grid --- */
+  .receipt-grid {
+    gap: 30px !important;
+    margin-bottom: 22px !important;
+  }
+
+  .receipt-section h3 {
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.04em !important;
+    margin-bottom: 10px !important;
+    padding-bottom: 4px !important;
+  }
+
+  .receipt-section p {
+    font-size: 13.5px !important;
+    margin-bottom: 6px !important;
+    line-height: 1.45 !important;
+  }
+
+  /* --- Tax component table --- */
+  .receipt-table-wrapper {
+    margin-bottom: 22px !important;
+  }
+
+  .receipt-table {
+    font-size: 13.5px !important;
+  }
+
+  .receipt-table th {
+    padding: 10px 14px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+  }
+
+  .receipt-table td {
+    padding: 10px 14px !important;
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+  }
+
+  .receipt-total-row td {
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+  }
+
+  /* --- Payment / Due / Verification meta block --- */
+  .receipt-meta-grid {
+    gap: 10px 24px !important;
+    padding: 16px 20px !important;
+    margin-bottom: 22px !important;
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+  }
+
+  .receipt-meta-grid p {
+    margin-bottom: 0 !important;
+    line-height: 1.5 !important;
+  }
+
+  /* --- Footer / disclaimer --- */
+  .receipt-footer {
+    padding-top: 14px !important;
+    margin-top: 0 !important;
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+  }
+
+  .receipt-timestamp {
+    margin-top: 4px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+  }
+}
+
+@media print {
+  @page { size: A4 portrait; margin: 10mm; }
+  body { background: white !important; }
+  .no-print, nav, .navbar, header, footer, .receipt-modal-actions { display: none !important; }
+  
+  .receipt-modal-backdrop {
+    position: static !important;
+    background: none !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+  
+  .receipt-modal-content {
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    border: none !important;
+  }
+  
+  .receipt-document {
+    display: block !important;
+    width: 100% !important;
+  }
+}

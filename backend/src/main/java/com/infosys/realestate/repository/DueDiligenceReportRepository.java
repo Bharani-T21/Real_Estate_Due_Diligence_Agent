@@ -3,6 +3,7 @@ package com.infosys.realestate.repository;
 import com.infosys.realestate.entity.DueDiligenceReport;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -14,10 +15,13 @@ public interface DueDiligenceReportRepository extends JpaRepository<DueDiligence
 
     List<DueDiligenceReport> findByPropertyPropertyId(Long propertyId);
 
+    @EntityGraph(attributePaths = {"property", "requestedBy"})
     Page<DueDiligenceReport> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
+    @EntityGraph(attributePaths = {"property", "requestedBy"})
     Page<DueDiligenceReport> findByRequestedByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"property", "requestedBy"})
     Page<DueDiligenceReport> findByStatusOrderByCreatedAtDesc(String status, Pageable pageable);
 
     long countByStatus(String status);
@@ -38,3 +42,4 @@ public interface DueDiligenceReportRepository extends JpaRepository<DueDiligence
            "FROM DueDiligenceReport r GROUP BY r.property.propertyId, r.property.address ORDER BY cnt DESC")
     List<Object[]> topPropertiesByReportCount(Pageable pageable);
 }
+

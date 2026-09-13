@@ -29,82 +29,6 @@ function timeAgo(date) {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
-// Generate notifications from property + risk data
-function buildNotifications(properties, reports) {
-  const notifs = [];
-  const base = Date.now();
-
-  // System notification
-  notifs.push({
-    id: "sys-welcome",
-    type: "INFO",
-    title: "Welcome to Diligence Agent",
-    message: "Your dashboard is live. Start analyzing properties to receive risk alerts.",
-    propertyId: null,
-    propertyName: null,
-    ts: base - 2 * 60 * 1000,
-    read: false,
-  });
-
-  properties.forEach((p, idx) => {
-    const report = reports[p.propertyId];
-    const offset = (idx + 1) * 8 * 60 * 1000;
-
-    if (!report) {
-      // No report yet
-      notifs.push({
-        id: `notif-nodd-${p.propertyId}`,
-        type: "INFO",
-        title: `Property #${p.propertyId} — Due Diligence Pending`,
-        message: `"${p.propertyName || "Unnamed Property"}" has not been analyzed yet. Run a due diligence check to get a risk assessment.`,
-        propertyId: p.propertyId,
-        propertyName: p.propertyName,
-        ts: base - offset,
-        read: false,
-      });
-      return;
-    }
-
-    const flag = report.overallRiskFlag;
-    if (flag === "HIGH_RISK") {
-      notifs.push({
-        id: `notif-hr-${p.propertyId}`,
-        type: "DANGER",
-        title: `⚠️ High Risk Alert — ${p.propertyName || `Property #${p.propertyId}`}`,
-        message: `This property has ${report.activePublicRecordsCount} active high-severity record(s) or delinquent tax. Immediate review recommended.`,
-        propertyId: p.propertyId,
-        propertyName: p.propertyName,
-        ts: base - offset,
-        read: false,
-      });
-    } else if (flag === "CONCERNS_FOUND") {
-      notifs.push({
-        id: `notif-cf-${p.propertyId}`,
-        type: "WARNING",
-        title: `Concerns Detected — ${p.propertyName || `Property #${p.propertyId}`}`,
-        message: `Medium-severity public records found: ${report.activePublicRecordsCount} active issue(s). Review the full report before proceeding.`,
-        propertyId: p.propertyId,
-        propertyName: p.propertyName,
-        ts: base - offset,
-        read: false,
-      });
-    } else {
-      notifs.push({
-        id: `notif-clear-${p.propertyId}`,
-        type: "SUCCESS",
-        title: `All Clear — ${p.propertyName || `Property #${p.propertyId}`}`,
-        message: `Due diligence completed. No active liens, violations, or delinquent taxes detected.`,
-        propertyId: p.propertyId,
-        propertyName: p.propertyName,
-        ts: base - offset,
-        read: true,
-      });
-    }
-  });
-
-  return notifs.sort((a, b) => b.ts - a.ts);
-}
-
 const TYPE_CONFIG = {
   DANGER: {
     cls: "notif-danger",
@@ -130,7 +54,6 @@ const TYPE_CONFIG = {
 
 const FILTERS = ["All", "Unread", "Alerts"];
 
-// ─── Component ────────────────────────────────────────────────────────────────
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -141,25 +64,8 @@ export default function NotificationsPage() {
     setLoading(true);
     setError(null);
     try {
-      const props = await apiFetch("/api/properties");
-      const propList = Array.isArray(props) ? props : [];
-
-      // Fetch combined reports for all properties in parallel (ignore failures)
-      const reportMap = {};
-      await Promise.allSettled(
-        propList.map(async (p) => {
-          try {
-            const r = await apiFetch(
-              `/api/public-records/${p.propertyId}/combined-report`
-            );
-            reportMap[p.propertyId] = r;
-          } catch (_) {
-            // No report available for this property
-          }
-        })
-      );
-
-      setNotifications(buildNotifications(propList, reportMap));
+      const data = await apiFetch("/api/notifications");
+      setNotifications(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -171,14 +77,24 @@ export default function NotificationsPage() {
     loadData();
   }, []);
 
-  const markRead = (id) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+  const markRead = async (id) => {
+    try {
+      await apiFetch(`/api/notifications/${id}/read`, { method: "PUT" });
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      );
+    } catch (err) {
+      console.error("Failed to mark as read", err);
+    }
   };
 
-  const markAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const markAllRead = async () => {
+    try {
+      await apiFetch("/api/notifications/read-all", { method: "PUT" });
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch (err) {
+      console.error("Failed to mark all as read", err);
+    }
   };
 
   const filtered = notifications.filter((n) => {
@@ -303,15 +219,24 @@ export default function NotificationsPage() {
         {!loading && !error && filtered.length > 0 && (
           <div className="nf-list">
             {filtered.map((n) => {
-              const cfg = TYPE_CONFIG[n.type] || TYPE_CONFIG["INFO"];
+              const typeMap = {
+                REPORT_FAILED: "DANGER",
+                REPORT_COMPLETED: "SUCCESS",
+                GENERAL: "INFO"
+              };
+              const nType = typeMap[n.type] || n.type;
+              const cfg = TYPE_CONFIG[nType] || TYPE_CONFIG["INFO"];
+              const isRead = n.read !== undefined ? n.read : n.isRead;
+              const ts = n.ts || (n.createdAt ? new Date(n.createdAt).getTime() : Date.now());
+
               return (
                 <div
                   key={n.id}
-                  className={`nf-item ${cfg.cls} ${n.read ? "nf-read" : "nf-unread"}`}
+                  className={`nf-item ${cfg.cls} ${isRead ? "nf-read" : "nf-unread"}`}
                   onClick={() => markRead(n.id)}
                 >
                   {/* Unread Dot */}
-                  {!n.read && <span className={`nf-dot ${cfg.dotCls}`} />}
+                  {!isRead && <span className={`nf-dot ${cfg.dotCls}`} />}
 
                   {/* Icon */}
                   <div className={`nf-icon-wrap ${cfg.cls}`}>{cfg.icon}</div>
@@ -320,23 +245,14 @@ export default function NotificationsPage() {
                   <div className="nf-content">
                     <div className="nf-content-header">
                       <p className="nf-item-title">{n.title}</p>
-                      <span className="nf-ts">{timeAgo(n.ts)}</span>
+                      <span className="nf-ts">{timeAgo(ts)}</span>
                     </div>
                     <p className="nf-item-msg">{n.message}</p>
 
-                    {n.propertyId && (
+                    {n.reportId && (
                       <div className="nf-item-actions">
                         <Link
-                          href={`/properties/${n.propertyId}`}
-                          className="nf-action-link"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Building2 size={13} />
-                          View Property
-                          <ChevronRight size={12} />
-                        </Link>
-                        <Link
-                          href={`/report?propertyId=${n.propertyId}`}
+                          href={`/report?id=${n.reportId}`}
                           className="nf-action-link"
                           onClick={(e) => e.stopPropagation()}
                         >
@@ -356,3 +272,4 @@ export default function NotificationsPage() {
     </div>
   );
 }
+

@@ -17,6 +17,9 @@ public class ReportHistoryDTO {
     private LocalDateTime completedAt;
     private Long durationMs;
     private String errorMessage;
+    private Integer riskScore;
+    private String riskLevel;
+    private String reportSnapshot;
 
     public ReportHistoryDTO() {}
 
@@ -58,4 +61,13 @@ public class ReportHistoryDTO {
 
     public String getErrorMessage() { return errorMessage; }
     public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
+
+    public Integer getRiskScore() { return riskScore; }
+    public void setRiskScore(Integer riskScore) { this.riskScore = riskScore; }
+
+    public String getRiskLevel() { return riskLevel; }
+    public void setRiskLevel(String riskLevel) { this.riskLevel = riskLevel; }
+
+    public String getReportSnapshot() { return reportSnapshot; }
+    public void setReportSnapshot(String reportSnapshot) { this.reportSnapshot = reportSnapshot; }
 }
