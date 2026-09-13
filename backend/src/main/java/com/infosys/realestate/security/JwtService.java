@@ -28,6 +28,14 @@ public class JwtService {
 
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
+                .claim(
+                        "role",
+                        userDetails.getAuthorities()
+                                .stream()
+                                .findFirst()
+                                .map(authority -> authority.getAuthority())
+                                .orElse("")
+                )
                 .setIssuedAt(currentTime)
                 .setExpiration(expiryTime)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)

@@ -51,4 +51,3 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserByEmail(principal.getName()));
     }
 }
-

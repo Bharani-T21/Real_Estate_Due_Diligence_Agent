@@ -55,7 +55,7 @@ public class UserServiceImpl implements UserService {
                 savedUser.getUserId(),
                 savedUser.getName(),
                 savedUser.getEmail(),
-                savedUser.getRole() != null ? savedUser.getRole().getRoleName() : null
+                savedUser.getRole() != null ? savedUser.getRole().getRoleName() : "USER"
         );
     }
 
@@ -67,7 +67,7 @@ public class UserServiceImpl implements UserService {
                         user.getUserId(),
                         user.getName(),
                         user.getEmail(),
-                        user.getRole() != null ? user.getRole().getRoleName() : null
+                        user.getRole() != null ? user.getRole().getRoleName() : "USER"
                 ))
                 .collect(Collectors.toList());
     }
@@ -81,7 +81,7 @@ public class UserServiceImpl implements UserService {
                 user.getUserId(),
                 user.getName(),
                 user.getEmail(),
-                user.getRole() != null ? user.getRole().getRoleName() : null
+                user.getRole() != null ? user.getRole().getRoleName() : "USER"
         );
     }
 
@@ -101,8 +101,7 @@ public class UserServiceImpl implements UserService {
                 user.getUserId(),
                 user.getName(),
                 user.getEmail(),
-                user.getRole() != null ? user.getRole().getRoleName() : null
+                user.getRole() != null ? user.getRole().getRoleName() : "USER"
         );
     }
 }
-

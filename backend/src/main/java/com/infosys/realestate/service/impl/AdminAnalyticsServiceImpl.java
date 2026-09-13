@@ -25,14 +25,21 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
 
     @Override
     public DashboardAnalyticsDTO getDashboard() {
+        System.out.println("===== DASHBOARD START =====");
         DashboardAnalyticsDTO dto = new DashboardAnalyticsDTO();
 
         // --- Totals ---
+        System.out.println("1. Counting properties...");
         dto.setTotalProperties(propertyRepository.count());
+        System.out.println("2. Counting reports...");
         dto.setTotalReports(reportRepository.count());
+        System.out.println("3. Counting users...");
+
         dto.setTotalUsers(userRepository.count());
 
         // --- Reports by status ---
+
+        System.out.println("4. Counting report statuses...");
         Map<String, Long> byStatus = new LinkedHashMap<>();
         byStatus.put("COMPLETED", reportRepository.countByStatus("COMPLETED"));
         byStatus.put("IN_PROGRESS", reportRepository.countByStatus("IN_PROGRESS"));

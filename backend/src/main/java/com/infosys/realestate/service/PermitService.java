@@ -1,7 +1,13 @@
 package com.infosys.realestate.service;
 
-import com.infosys.realestate.dto.PermitInfoDTO;
+import com.infosys.realestate.dto.PermitRequest;
+import com.infosys.realestate.dto.PermitResponse;
+
+import java.util.List;
 
 public interface PermitService {
-    PermitInfoDTO getPermitInfo(Long propertyId);
+
+    List<PermitResponse> getPermitsByPropertyId(Long propertyId);
+
+    PermitResponse createPermit(PermitRequest request);
 }

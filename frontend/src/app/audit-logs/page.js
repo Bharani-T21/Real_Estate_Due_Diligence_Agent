@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
 import ProtectedRoute from "../../components/ProtectedRoute";
+import { apiFetch } from "../../lib/api";
 import "./audit-logs.css";
+
 import {
   ClipboardList,
   CheckCircle,
@@ -11,42 +13,48 @@ import {
   CalendarClock,
   Search,
   RefreshCw,
-  Loader2,
-  AlertCircle,
   ChevronLeft,
   ChevronRight,
+  AlertTriangle,
 } from "lucide-react";
-import { apiFetch } from "../../lib/api";
 
 export default function AuditLogs() {
   const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const PAGE_SIZE = 20;
 
   const fetchLogs = async (pageNum = 0) => {
-    setLoading(true);
-    setError(null);
     try {
-      const data = await apiFetch(`/api/admin/audit-logs?page=${pageNum}&size=${PAGE_SIZE}`);
-      // Spring Page response has content, totalPages, totalElements
-      if (data && Array.isArray(data.content)) {
-        setLogs(data.content);
-        setTotalPages(data.totalPages || 1);
-        setTotalElements(data.totalElements || data.content.length);
-      } else if (Array.isArray(data)) {
-        setLogs(data);
+      setLoading(true);
+      setError("");
+      const response = await apiFetch(`/api/admin/audit-logs?page=${pageNum}&size=${PAGE_SIZE}`);
+
+      if (response && Array.isArray(response.content)) {
+        setLogs(response.content);
+        setPage(response.number ?? pageNum);
+        setTotalPages(response.totalPages ?? 1);
+        setTotalElements(response.totalElements ?? response.content.length);
+      } else if (Array.isArray(response)) {
+        setLogs(response);
+        setPage(0);
         setTotalPages(1);
-        setTotalElements(data.length);
+        setTotalElements(response.length);
       } else {
         setLogs([]);
       }
     } catch (err) {
-      setError(err.message);
+      console.error("Failed to fetch audit logs:", err);
+      setError(err.message || "Unable to load audit logs. Please try again.");
+      setLogs([]);
     } finally {
       setLoading(false);
     }
@@ -56,162 +64,315 @@ export default function AuditLogs() {
     fetchLogs(page);
   }, [page]);
 
-  const handleRefresh = () => {
-    setPage(0);
-    fetchLogs(0);
+  const formatTimestamp = (createdAt) => {
+    if (!createdAt) return "—";
+    const date = new Date(createdAt);
+    if (Number.isNaN(date.getTime())) {
+      return createdAt;
+    }
+    return date.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
-  // Filter in-memory for current page results
-  const filtered = logs.filter((log) => {
-    const term = search.toLowerCase();
-    return (
-      !term ||
-      log.actorEmail?.toLowerCase().includes(term) ||
-      log.action?.toLowerCase().includes(term) ||
-      log.entityType?.toLowerCase().includes(term) ||
-      log.outcome?.toLowerCase().includes(term)
-    );
+  const getStatus = (outcome) => {
+    if (!outcome) return "Unknown";
+    const value = outcome.toUpperCase();
+    if (value === "SUCCESS") return "Success";
+    if (value === "FAILURE" || value === "FAILED") return "Failed";
+    return outcome;
+  };
+
+  const filteredLogs = logs.filter((log) => {
+    const term = search.trim().toLowerCase();
+    const status = getStatus(log.outcome);
+
+    const matchesSearch =
+      term === "" ||
+      String(log.id || "").toLowerCase().includes(term) ||
+      String(log.actorEmail || "").toLowerCase().includes(term) ||
+      String(log.action || "").toLowerCase().includes(term) ||
+      String(log.entityType || "").toLowerCase().includes(term) ||
+      String(log.details || "").toLowerCase().includes(term);
+
+    const matchesStatus =
+      statusFilter === "All" || status === statusFilter;
+
+    return matchesSearch && matchesStatus;
   });
 
-  const getStatusIcon = (outcome) => {
-    if (!outcome) return null;
-    if (outcome.toUpperCase() === "SUCCESS") return <CheckCircle className="icon-success" size={16} />;
-    if (outcome.toUpperCase() === "FAILURE" || outcome.toUpperCase() === "FAILED") return <XCircle className="icon-failure" size={16} />;
-    return <CalendarClock size={16} className="icon-pending" />;
+  const successfulLogs = logs.filter(
+    (log) => String(log.outcome || "").toUpperCase() === "SUCCESS"
+  ).length;
+
+  const failedLogs = logs.filter((log) => {
+    const outcome = String(log.outcome || "").toUpperCase();
+    return outcome === "FAILURE" || outcome === "FAILED";
+  }).length;
+
+  const today = new Date();
+  const todaysLogsCount = logs.filter((log) => {
+    if (!log.createdAt) return false;
+    const logDate = new Date(log.createdAt);
+    return (
+      logDate.getDate() === today.getDate() &&
+      logDate.getMonth() === today.getMonth() &&
+      logDate.getFullYear() === today.getFullYear()
+    );
+  }).length;
+
+  const handlePrevious = () => {
+    if (page > 0) {
+      setPage(page - 1);
+    }
   };
 
-  const formatTimestamp = (ts) => {
-    if (!ts) return "—";
-    try { return new Date(ts).toLocaleString("en-IN"); } catch { return ts; }
+  const handleNext = () => {
+    if (page < totalPages - 1) {
+      setPage(page + 1);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchLogs(page);
   };
 
   return (
-    <ProtectedRoute>
-      <div style={{ minHeight: "100vh", backgroundColor: "var(--bg-main, #f8fafc)" }}>
-        <Navbar />
-        <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "40px 24px" }}>
-          {/* Header */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "32px", flexWrap: "wrap", gap: "16px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <div style={{ width: "44px", height: "44px", background: "var(--primary, #5e5af5)", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}>
-                <ClipboardList size={22} />
-              </div>
-              <div>
-                <h1 style={{ margin: 0, fontSize: "24px", fontWeight: 800, color: "#0f172a" }}>Audit Logs</h1>
-                <p style={{ margin: 0, fontSize: "14px", color: "#64748b" }}>
-                  Real-time system audit trail from backend — {totalElements} total records
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleRefresh}
-              style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 18px", border: "1px solid #e2e8f0", borderRadius: "8px", background: "white", cursor: "pointer", fontSize: "14px" }}
-            >
-              <RefreshCw size={16} /> Refresh
-            </button>
+    <ProtectedRoute allowedRoles={["ADMIN"]}>
+      <Navbar />
+
+      <div className="audit-container">
+        {/* HEADER */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "20px",
+            marginBottom: "8px",
+          }}
+        >
+          <div>
+            <h1>Audit Logs</h1>
+            <p className="audit-description">
+              Monitor and review all user activities and system events for security and compliance.
+            </p>
           </div>
 
-          {/* Search */}
-          <div style={{ position: "relative", marginBottom: "24px" }}>
-            <Search size={18} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
+          <button
+            onClick={handleRefresh}
+            disabled={loading}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "7px",
+              padding: "10px 16px",
+              width: "auto",
+              flexShrink: 0,
+              color: "var(--text-main)",
+              border: "1px solid var(--border)",
+              borderRadius: "8px",
+              background: "var(--bg-card)",
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
+          >
+            <RefreshCw size={17} className={loading ? "spin" : ""} />
+            Refresh
+          </button>
+        </div>
+
+        {/* SEARCH + FILTER */}
+        <div
+          className="search-container"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+          }}
+        >
+          <div style={{ position: "relative", flex: 1 }}>
+            <Search className="search-icon" size={18} />
             <input
               type="text"
-              placeholder="Filter logs by actor, action, entity type, or outcome…"
+              placeholder="Search by Log ID, User, Action, Entity..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ width: "100%", padding: "12px 16px 12px 42px", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "15px", background: "white", boxSizing: "border-box" }}
+              className="search-box"
             />
           </div>
 
-          {/* Table */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={{
+              padding: "10px 14px",
+              borderRadius: "8px",
+              border: "1px solid var(--border)",
+              background: "var(--bg-card)",
+              color: "var(--text-main)",
+            }}
+          >
+            <option value="All">All Statuses</option>
+            <option value="Success">Success</option>
+            <option value="Failed">Failed</option>
+          </select>
+        </div>
+
+        {/* ERROR */}
+        {error && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              padding: "14px 16px",
+              marginBottom: "20px",
+              borderRadius: "10px",
+              background: "#fef2f2",
+              color: "#b91c1c",
+            }}
+          >
+            <AlertTriangle size={20} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* STATS */}
+        <div className="stats-container">
+          <div className="stat-card total">
+            <ClipboardList size={30} />
+            <h2>{totalElements}</h2>
+            <p>Total Logs</p>
+          </div>
+
+          <div className="stat-card success">
+            <CheckCircle size={30} />
+            <h2>{successfulLogs}</h2>
+            <p>Successful Events</p>
+          </div>
+
+          <div className="stat-card failed">
+            <XCircle size={30} />
+            <h2>{failedLogs}</h2>
+            <p>Failed Events</p>
+          </div>
+
+          <div className="stat-card today">
+            <CalendarClock size={30} />
+            <h2>{todaysLogsCount}</h2>
+            <p>Today's Logs</p>
+          </div>
+        </div>
+
+        {/* TABLE */}
+        <div style={{ overflowX: "auto" }}>
           {loading ? (
-            <div style={{ textAlign: "center", padding: "60px", color: "#64748b" }}>
-              <p>Loading audit logs from backend…</p>
+            <div style={{ padding: "50px", textAlign: "center" }}>
+              <RefreshCw size={28} className="spin" />
+              <p>Loading audit logs...</p>
             </div>
-          ) : error ? (
-            <div style={{ background: "#fee2e2", color: "#991b1b", padding: "16px", borderRadius: "10px", display: "flex", gap: "10px" }}>
-              <AlertCircle size={20} />
-              <div>
-                <strong>Failed to load audit logs:</strong> {error}
-                <br /><small>Make sure you are logged in as an Admin.</small>
-              </div>
+          ) : filteredLogs.length === 0 ? (
+            <div style={{ padding: "50px", textAlign: "center" }}>
+              <ClipboardList size={40} />
+              <h3>No audit logs found</h3>
+              <p>
+                {search || statusFilter !== "All"
+                  ? "No logs match your search or filter."
+                  : "There are no audit logs available."}
+              </p>
             </div>
           ) : (
-            <>
-              <div style={{ background: "white", borderRadius: "14px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead>
-                      <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
-                        {["Timestamp", "Actor", "Role", "Action", "Entity", "Entity ID", "Outcome", "IP Address"].map((h) => (
-                          <th key={h} style={{ padding: "14px 16px", textAlign: "left", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px", whiteSpace: "nowrap" }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filtered.length === 0 ? (
-                        <tr>
-                          <td colSpan={8} style={{ padding: "40px", textAlign: "center", color: "#94a3b8" }}>
-                            {logs.length === 0 ? "No audit log entries found in the database." : "No logs match your search filter."}
-                          </td>
-                        </tr>
-                      ) : filtered.map((log, i) => (
-                        <tr key={log.id || i} style={{ borderBottom: "1px solid #f1f5f9", background: i % 2 === 0 ? "white" : "#fafafa" }}>
-                          <td style={{ padding: "12px 16px", fontSize: "12px", color: "#64748b", whiteSpace: "nowrap" }}>{formatTimestamp(log.createdAt)}</td>
-                          <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: 600, color: "#0f172a" }}>{log.actorEmail || "—"}</td>
-                          <td style={{ padding: "12px 16px", fontSize: "12px", color: "#475569" }}>{log.actorRole || "—"}</td>
-                          <td style={{ padding: "12px 16px", fontSize: "13px", color: "#334155" }}>{log.action || "—"}</td>
-                          <td style={{ padding: "12px 16px", fontSize: "12px", color: "#64748b" }}>{log.entityType || "—"}</td>
-                          <td style={{ padding: "12px 16px", fontSize: "12px", color: "#64748b", fontFamily: "monospace" }}>{log.entityId || "—"}</td>
-                          <td style={{ padding: "12px 16px" }}>
-                            <span style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "5px",
-                              padding: "4px 10px",
-                              borderRadius: "20px",
-                              fontSize: "12px",
-                              fontWeight: 700,
-                              background: log.outcome?.toUpperCase() === "SUCCESS" ? "#dcfce7" : "#fee2e2",
-                              color: log.outcome?.toUpperCase() === "SUCCESS" ? "#15803d" : "#dc2626",
-                            }}>
-                              {getStatusIcon(log.outcome)}
-                              {log.outcome || "—"}
-                            </span>
-                          </td>
-                          <td style={{ padding: "12px 16px", fontSize: "12px", color: "#64748b", fontFamily: "monospace" }}>{log.ipAddress || "—"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+            <table className="audit-table">
+              <thead>
+                <tr>
+                  <th>Log ID</th>
+                  <th>User</th>
+                  <th>Action</th>
+                  <th>Entity</th>
+                  <th>Timestamp</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", marginTop: "24px" }}>
-                  <button
-                    onClick={() => setPage((p) => Math.max(0, p - 1))}
-                    disabled={page === 0}
-                    style={{ display: "flex", alignItems: "center", gap: "4px", padding: "8px 16px", border: "1px solid #e2e8f0", borderRadius: "8px", background: "white", cursor: page === 0 ? "not-allowed" : "pointer", opacity: page === 0 ? 0.5 : 1, fontSize: "14px" }}
-                  >
-                    <ChevronLeft size={16} /> Prev
-                  </button>
-                  <span style={{ fontSize: "14px", color: "#475569" }}>
-                    Page {page + 1} of {totalPages}
-                  </span>
-                  <button
-                    onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                    disabled={page >= totalPages - 1}
-                    style={{ display: "flex", alignItems: "center", gap: "4px", padding: "8px 16px", border: "1px solid #e2e8f0", borderRadius: "8px", background: "white", cursor: page >= totalPages - 1 ? "not-allowed" : "pointer", opacity: page >= totalPages - 1 ? 0.5 : 1, fontSize: "14px" }}
-                  >
-                    Next <ChevronRight size={16} />
-                  </button>
-                </div>
-              )}
-            </>
+              <tbody>
+                {filteredLogs.map((log) => {
+                  const status = getStatus(log.outcome);
+                  return (
+                    <tr key={log.id}>
+                      <td>#{log.id}</td>
+                      <td>{log.actorEmail || "System"}</td>
+                      <td>{log.action || "—"}</td>
+                      <td>{log.entityType || "—"}</td>
+                      <td>{formatTimestamp(log.createdAt)}</td>
+                      <td>
+                        <span className={`status ${status.toLowerCase()}`}>
+                          {status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
-        </main>
+        </div>
+
+        {/* PAGINATION */}
+        {!loading && totalPages > 0 && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginTop: "20px",
+              padding: "10px 0",
+            }}
+          >
+            <span>
+              Page {page + 1} of {totalPages}
+            </span>
+
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                onClick={handlePrevious}
+                disabled={page === 0}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  padding: "8px 14px",
+                  borderRadius: "7px",
+                  border: "1px solid var(--border)",
+                  cursor: page === 0 ? "not-allowed" : "pointer",
+                }}
+              >
+                <ChevronLeft size={16} />
+                Previous
+              </button>
+
+              <button
+                onClick={handleNext}
+                disabled={page >= totalPages - 1}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  padding: "8px 14px",
+                  borderRadius: "7px",
+                  border: "1px solid var(--border)",
+                  cursor: page >= totalPages - 1 ? "not-allowed" : "pointer",
+                }}
+              >
+                Next
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </ProtectedRoute>
   );

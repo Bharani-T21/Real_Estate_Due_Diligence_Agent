@@ -20,14 +20,13 @@ public class PropertyTaxHistoryController {
     public PropertyTaxHistory createPropertyTaxHistory(@RequestBody PropertyTaxHistory propertyTaxHistory) {
         return propertyTaxHistoryService.savePropertyTaxHistory(propertyTaxHistory);
     }
+    @GetMapping("/property/{propertyId}")
+    public List<PropertyTaxHistory> getTaxHistoryByPropertyId(
+            @PathVariable Long propertyId) {
 
-    // Get All Property Tax History
-    @GetMapping
-    public List<PropertyTaxHistory> getAllPropertyTaxHistory() {
-        return propertyTaxHistoryService.getAllPropertyTaxHistory();
+        return propertyTaxHistoryService.getTaxHistoryByPropertyId(propertyId);
     }
-
-    // Get Property Tax History by ID
+        // Get Property Tax History by ID
     @GetMapping("/{id}")
     public Optional<PropertyTaxHistory> getPropertyTaxHistoryById(@PathVariable Long id) {
         return propertyTaxHistoryService.getPropertyTaxHistoryById(id);

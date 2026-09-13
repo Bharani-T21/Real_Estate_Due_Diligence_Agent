@@ -1,7 +1,8 @@
 package com.infosys.realestate.service;
 
-import com.infosys.realestate.dto.FloodZoneInfoDTO;
+import com.infosys.realestate.dto.FloodZoneResponse;
 
 public interface FloodZoneService {
-    FloodZoneInfoDTO getFloodZoneInfo(Long propertyId);
+
+    FloodZoneResponse getFloodZoneByPropertyId(Long propertyId);
 }

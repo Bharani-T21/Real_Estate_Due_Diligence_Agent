@@ -1,0 +1,80 @@
+.add-property-page {
+  min-height: 100vh;
+  padding: 60px 20px;
+  background: var(--bg-main);
+}
+
+.add-property-card {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 35px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.add-property-card h1 {
+  margin-bottom: 8px;
+  color: var(--text-main);
+}
+
+.add-property-card p {
+  margin-bottom: 30px;
+  color: var(--text-muted);
+}
+
+.add-property-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.add-property-card label {
+  margin-top: 8px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.add-property-card input,
+.add-property-card select {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-size: 14px;
+}
+
+.add-property-card input:focus,
+.add-property-card select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.add-property-card button {
+  margin-top: 20px;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.add-property-card button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.property-message {
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--success-light);
+  color: var(--success);
+  font-weight: 600;
+}

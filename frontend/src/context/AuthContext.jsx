@@ -7,69 +7,100 @@ const AuthContext = createContext({
   user: null,
   token: null,
   isAuthenticated: false,
-  loading: true,
+  loading: false,
   login: async () => {},
   register: async () => {},
   logout: () => {},
 });
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("token") || null;
+    }
+    return null;
+  });
+
+  const [user, setUser] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("user");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (_) {}
+      }
+    }
+    return null;
+  });
+
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    try {
+    const restoreSession = async () => {
       const storedToken = localStorage.getItem("token");
-      const storedUser = localStorage.getItem("user");
-      if (storedToken) {
-        setToken(storedToken);
+      if (!storedToken) return;
+
+      try {
+        const response = await fetch("/api/users/me", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${storedToken}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+          localStorage.setItem("user", JSON.stringify(userData));
+        }
+      } catch (err) {
+        console.warn("User detail fetch error:", err);
       }
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-      }
-    } catch (err) {
-      console.error("Failed to restore user session from localStorage:", err);
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    restoreSession();
   }, []);
 
   const login = async (email, password) => {
     try {
       const data = await authApi.login(email, password);
-      if (data && data.token) {
-        const authToken = data.token;
-        setToken(authToken);
-        localStorage.setItem("token", authToken);
-
-        let userInfo = {
-          email,
-          name: email.split("@")[0],
-          role: "BUYER",
-        };
-
-        try {
-          const res = await fetch("/api/users/me", {
-            headers: { Authorization: `Bearer ${authToken}` },
-          });
-          if (res.ok) {
-            const profile = await res.json();
-            userInfo = {
-              userId: profile.userId,
-              email: profile.email,
-              name: profile.name || userInfo.name,
-              role: profile.role || "BUYER",
-            };
-          }
-        } catch (_) {}
-
-        setUser(userInfo);
-        localStorage.setItem("user", JSON.stringify(userInfo));
-        return { success: true, data };
+      if (!data || !data.token) {
+        throw new Error("Invalid email or password");
       }
+      const authToken = data.token;
+      setToken(authToken);
+      localStorage.setItem("token", authToken);
+
+      let userInfo = {
+        email,
+        name: email.split("@")[0],
+        role: "BUYER",
+      };
+
+      try {
+        const response = await fetch("/api/users/me", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (response.ok) {
+          userInfo = await response.json();
+        }
+      } catch (_) {}
+
+      setUser(userInfo);
+      localStorage.setItem("user", JSON.stringify(userInfo));
+
+      return {
+        success: true,
+        data,
+        user: userInfo,
+      };
     } catch (err) {
-      console.warn("Backend auth error:", err.message);
+      console.error("Login error:", err);
       throw err;
     }
   };
@@ -79,11 +110,7 @@ export function AuthProvider({ children }) {
     if (sanitizedRole.toUpperCase().includes("ADMIN")) {
       sanitizedRole = "BUYER";
     }
-
-    // Register returns UserResponseDTO which does not have token, so we auto login after register
     await authApi.register({ ...userData, role: sanitizedRole });
-
-    // Auto login after registration to get JWT
     return await login(userData.email, userData.password);
   };
 

@@ -11,19 +11,18 @@ import {
   UserPlus,
   ShieldCheck,
   ShieldAlert,
-  FileText,
 } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuth();
 
+  const roleStr = String(user?.role || "").toUpperCase();
+  const emailStr = String(user?.email || "").toLowerCase();
   const isAdmin =
     isAuthenticated &&
     user &&
-    (user.role === "Admin" ||
-      user.role === "ADMIN" ||
-      (user.email && user.email.toLowerCase().includes("admin")));
+    (roleStr.includes("ADMIN") || emailStr.includes("admin"));
 
   const navLinks = [
     { name: "Properties", href: "/properties" },
@@ -35,7 +34,10 @@ export default function Navbar() {
   ];
 
   if (isAdmin) {
-    navLinks.push({ name: "Admin Dashboard", href: "/admin" });
+    navLinks.push({
+      name: "Admin Dashboard",
+      href: "/admin",
+    });
   }
 
   return (
@@ -48,22 +50,23 @@ export default function Navbar() {
       </Link>
 
       <nav className="navbar-links">
-        {isAuthenticated && navLinks.map((link) => {
-          const isActive = pathname === link.href;
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`navbar-link ${isActive ? "active" : ""}`}
-              style={{
-                color: isActive ? "var(--primary)" : undefined,
-                fontWeight: isActive ? "700" : "600",
-              }}
-            >
-              {link.name}
-            </Link>
-          );
-        })}
+        {isAuthenticated &&
+          navLinks.map((link) => {
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`navbar-link ${isActive ? "active" : ""}`}
+                style={{
+                  color: isActive ? "var(--primary)" : undefined,
+                  fontWeight: isActive ? "700" : "600",
+                }}
+              >
+                {link.name}
+              </Link>
+            );
+          })}
       </nav>
 
       <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
@@ -85,7 +88,7 @@ export default function Navbar() {
             >
               {isAdmin ? <ShieldAlert size={16} /> : <ShieldCheck size={16} />}
               <span>
-                {user?.name || "User"} {user?.role ? `(${user.role})` : ""}
+                {user?.name || "User"}{user?.role ? ` (${user.role})` : ""}
               </span>
             </div>
 

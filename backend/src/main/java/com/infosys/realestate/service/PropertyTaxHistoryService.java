@@ -28,6 +28,9 @@ public class PropertyTaxHistoryService {
     public Optional<PropertyTaxHistory> getPropertyTaxHistoryById(Long id) {
         return propertyTaxHistoryRepository.findById(id);
     }
+    public List<PropertyTaxHistory> getTaxHistoryByPropertyId(Long propertyId) {
+        return propertyTaxHistoryRepository.findByProperty_PropertyId(propertyId);
+    }
 
     // Delete Property Tax History
     public void deletePropertyTaxHistory(Long id) {

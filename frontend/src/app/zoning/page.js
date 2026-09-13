@@ -1,330 +1,991 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "../../components/Navbar";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import {
-  Layers, CheckCircle, XCircle, AlertCircle, Building, Ruler,
-  ShieldCheck, Compass, MapPin, FileCheck, Maximize2, Printer, X
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Building,
+  Ruler,
+  ShieldCheck,
+  Compass,
+  FileCheck,
+  Maximize2,
+  Loader2
 } from "lucide-react";
 import "./zoning.css";
 
-const PROPERTIES = {
-  "1": {
-    id: "1", title: "Luxury Villa", location: "Anna Nagar, Chennai, TN", code: "RES-R2-A", 
-    desc: "R-2 Medium Density Residential Zone",
-    allow: "Designated for primary residential use allowing single-family houses, semi-detached villas, duplex apartments, and low-rise multi-family residential structures up to 4 stories (15 meters).",
-    auth: "CMDA Chennai Authority", master: "Second Master Plan 2026", parcel: "Block 14 / Survey #204",
-    status: "100% Zoning Compliant", statusDesc: "Existing structure and intended usage adhere strictly to municipal set-backs and density parameters.",
-    far: "1.75", height: "45 ft", coverage: "60%", minPlot: "2,400",
-    frontSetback: "20.0 ft", rearSetback: "15.0 ft", sideLeft: "10.0 ft", sideRight: "10.0 ft",
-    overlay1: "Heritage Zone Clearance: Not Required (Clear of heritage sites)",
-    overlay2: "Coastal Regulation Zone (CRZ): Outside Restricted CRZ Tier",
-    overlay3: "Airport Height Clearance: Approved (Up to 60m height allowed in zone)",
-    coord: "13.0827° N, 80.2707° E"
-  },
-  "2": {
-    id: "2", title: "Modern Apartment", location: "Indiranagar, Bangalore, KA", code: "C-1 Commercial Mixed",
-    desc: "C-1 Mixed Use Zone",
-    allow: "Allows for residential apartments with commercial activities on ground floor. Ideal for retail and high-density residential.",
-    auth: "BMRDA Bangalore Authority", master: "Revised Master Plan 2031", parcel: "Sector 3 / Survey #42",
-    status: "100% Zoning Compliant", statusDesc: "Fully compliant with commercial-residential mixed-use requirements.",
-    far: "2.25", height: "60 ft", coverage: "50%", minPlot: "3,000",
-    frontSetback: "25.0 ft", rearSetback: "20.0 ft", sideLeft: "15.0 ft", sideRight: "15.0 ft",
-    overlay1: "Traffic Impact Area: Moderate (No restrictions)",
-    overlay2: "Lake Buffer Zone: Cleared (> 75m from water body)",
-    overlay3: "Airport Height Clearance: Approved",
-    coord: "12.9716° N, 77.5946° E"
-  },
-  "3": {
-    id: "3", title: "Independent House", location: "RS Puram, Coimbatore, TN", code: "R-1 Low Density",
-    desc: "R-1 Low Density Residential Zone",
-    allow: "Strictly for single-family independent houses. No commercial activities allowed.",
-    auth: "Coimbatore Local Planning", master: "Master Plan 2025", parcel: "Block A / Survey #18",
-    status: "Minor Setback Violation", statusDesc: "Notice issued regarding minor boundary wall encroachment on public right-of-way.",
-    far: "1.25", height: "30 ft", coverage: "65%", minPlot: "1,500",
-    frontSetback: "15.0 ft", rearSetback: "10.0 ft", sideLeft: "5.0 ft", sideRight: "5.0 ft",
-    overlay1: "Heritage Zone: Adjoining Heritage Precinct (Needs NOC for major changes)",
-    overlay2: "Hill Area Conservation: N/A",
-    overlay3: "Groundwater Recharge Zone: Mandatory Rainwater Harvesting",
-    coord: "11.0168° N, 76.9558° E"
-  },
-  "4": {
-    id: "4", title: "Premium Flat", location: "Gachibowli, Hyderabad, TS", code: "HUDA-R3",
-    desc: "R-3 High Density Residential Zone",
-    allow: "High-rise apartments and group housing schemes.",
-    auth: "HMDA Hyderabad Authority", master: "HMDA Master Plan 2031", parcel: "Survey #99/A",
-    status: "Buffer Zone Violation", statusDesc: "Property falls inside the high-risk river basin buffer zone and violates municipal construction guidelines.",
-    far: "3.00", height: "120 ft", coverage: "40%", minPlot: "5,000",
-    frontSetback: "30.0 ft", rearSetback: "25.0 ft", sideLeft: "20.0 ft", sideRight: "20.0 ft",
-    overlay1: "Wetland Buffer Encroachment: ACTIVE VIOLATION",
-    overlay2: "Fire Safety Buffer: Inadequate turning radius",
-    overlay3: "Airport Height Clearance: Conditional Approval",
-    coord: "17.4401° N, 78.3489° E"
-  }
-};
-
 export default function ZoningPage() {
-  const [selectedProperty, setSelectedProperty] = useState("1");
-  const [showCertificate, setShowCertificate] = useState(false);
+  const [properties, setProperties] = useState([]);
+  const [selectedProperty, setSelectedProperty] = useState("");
+  const [zoningData, setZoningData] = useState(null);
 
-  const activeProp = PROPERTIES[selectedProperty];
+  const [loadingProperties, setLoadingProperties] = useState(true);
+  const [loadingZoning, setLoadingZoning] = useState(false);
+  const [error, setError] = useState("");
+
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
+
+  // --------------------------------------------------
+  // Get JWT token
+  // --------------------------------------------------
+  const getToken = () => {
+    if (typeof window === "undefined") return null;
+
+    return (
+      localStorage.getItem("token") ||
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("jwt")
+    );
+  };
+
+  // --------------------------------------------------
+  // Fetch all properties
+  // --------------------------------------------------
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        setLoadingProperties(true);
+        setError("");
+
+        const token = getToken();
+
+        const headers = {
+          "Content-Type": "application/json"
+        };
+
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+
+        const response = await fetch(
+          "http://localhost:8080/api/properties",
+          {
+            method: "GET",
+            headers
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch properties. Status: ${response.status}`
+          );
+        }
+
+        const data = await response.json();
+
+        console.log("Properties from backend:", data);
+
+        setProperties(data);
+
+        if (data.length > 0) {
+          setSelectedProperty(String(data[0].propertyId));
+        }
+      } catch (error) {
+        console.error("Property fetch error:", error);
+        setError("Unable to load properties.");
+      } finally {
+        setLoadingProperties(false);
+      }
+    };
+
+    fetchProperties();
+  }, []);
+
+  // --------------------------------------------------
+  // Fetch zoning whenever property changes
+  // --------------------------------------------------
+  useEffect(() => {
+    if (!selectedProperty) {
+      setZoningData(null);
+      return;
+    }
+
+    const fetchZoning = async () => {
+      try {
+        setLoadingZoning(true);
+        setError("");
+
+        const token = getToken();
+
+        const headers = {
+          "Content-Type": "application/json"
+        };
+
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+
+        const response = await fetch(
+          `http://localhost:8080/api/zoning/${selectedProperty}`,
+          {
+            method: "GET",
+            headers
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch zoning. Status: ${response.status}`
+          );
+        }
+
+        const data = await response.json();
+
+        console.log("Actual zoning data:", data);
+
+        setZoningData(data);
+      } catch (error) {
+        console.error("Zoning fetch error:", error);
+        setZoningData(null);
+        setError(
+          "Zoning information is not available for this property."
+        );
+      } finally {
+        setLoadingZoning(false);
+      }
+    };
+
+    fetchZoning();
+  }, [selectedProperty]);
+
+  // --------------------------------------------------
+  // Download actual zoning certificate
+  // --------------------------------------------------
+  const downloadCertificate = () => {
+    if (!zoningData) return;
+
+    const certificateContent = `
+ZONING CLASSIFICATION CERTIFICATE
+
+Property ID: ${zoningData.propertyId ?? "N/A"}
+Property: ${zoningData.propertyName ?? "N/A"}
+
+Address: ${zoningData.address ?? "N/A"}
+City: ${zoningData.city ?? "N/A"}
+State: ${zoningData.state ?? "N/A"}
+
+Zoning Category: ${zoningData.zoningCategory ?? "N/A"}
+Zoning Class: ${zoningData.zoningClass ?? "N/A"}
+
+Planning Authority: ${zoningData.planningAuthority ?? "N/A"}
+Master Plan: ${zoningData.masterPlan ?? "N/A"}
+Parcel Identifier: ${zoningData.parcelIdentifier ?? "N/A"}
+
+Compliance Status: ${zoningData.complianceStatus ?? "N/A"}
+
+Max FAR: ${zoningData.maxFar ?? "N/A"}
+Max Height: ${zoningData.maxHeight ?? "N/A"}
+Ground Coverage: ${zoningData.groundCoverage ?? "N/A"}
+Minimum Plot Area: ${zoningData.minPlotArea ?? "N/A"}
+
+Front Setback: ${zoningData.frontSetback ?? "N/A"}
+Rear Setback: ${zoningData.rearSetback ?? "N/A"}
+Left Setback: ${zoningData.leftSetback ?? "N/A"}
+Right Setback: ${zoningData.rightSetback ?? "N/A"}
+
+Permitted Usage:
+${zoningData.permittedUsage ?? "N/A"}
+
+Restricted Usage:
+${zoningData.restrictedUsage ?? "N/A"}
+
+Special Regulations:
+${zoningData.specialRegulations ?? "N/A"}
+`;
+
+    const blob = new Blob([certificateContent], {
+      type: "text/plain"
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Zoning-Certificate-${zoningData.propertyName || "Property"}.txt`;
+
+    document.body.appendChild(a);
+    a.click();
+
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // --------------------------------------------------
+  // Loading properties
+  // --------------------------------------------------
+  if (loadingProperties) {
+    return (
+      <ProtectedRoute>
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "var(--bg-main)"
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              fontWeight: "600"
+            }}
+          >
+            <Loader2 size={22} className="animate-spin" />
+            Loading properties...
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>
-      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", backgroundColor: "var(--bg-main)" }}>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "var(--bg-main)"
+        }}
+      >
         <Navbar />
 
-        <main className="zoning-page no-print">
+        <main className="zoning-page">
+
+          {/* ==================================================
+              HEADER
+          ================================================== */}
           <header className="zoning-header">
+
             <div className="zoning-title-area">
               <h1>Property Zoning & Land Use Dashboard</h1>
-              <p>Comprehensive analysis of municipal zoning classifications, land usage permits, and building density limits.</p>
+
+              <p>
+                Comprehensive analysis of municipal zoning classifications,
+                land usage permits, and building density limits.
+              </p>
             </div>
 
-            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                alignItems: "center"
+              }}
+            >
+
               <div className="zoning-badge-header">
                 <ShieldCheck size={18} />
-                CMDA Verified Zoning
+                Zoning Information
               </div>
+
               <select
-                style={{ padding: "10px 16px", borderRadius: "var(--radius-md)", border: "1px solid var(--border)", fontWeight: "600" }}
+                style={{
+                  padding: "10px 16px",
+                  borderRadius: "var(--radius-md)",
+                  border: "1px solid var(--border)",
+                  fontWeight: "600"
+                }}
                 value={selectedProperty}
-                onChange={(e) => setSelectedProperty(e.target.value)}
+                onChange={(e) =>
+                  setSelectedProperty(e.target.value)
+                }
               >
-                {Object.values(PROPERTIES).map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.title} - {p.code}
+                <option value="">
+                  Select Property
+                </option>
+
+                {properties.map((property) => (
+                  <option
+                    key={property.propertyId}
+                    value={property.propertyId}
+                  >
+                    {property.propertyName || `Property ${property.propertyId}`}
                   </option>
                 ))}
               </select>
+
             </div>
           </header>
 
-          <section className="zoning-banner-card">
-            <div className="zoning-main-info">
-              <span className="zone-code-tag">ZONING CATEGORY: {activeProp.code}</span>
-              <h2>{activeProp.desc}</h2>
-              <p>{activeProp.allow}</p>
 
-              <div className="banner-meta-list">
-                <div className="banner-meta-item">
-                  <span className="meta-label">Planning Authority</span>
-                  <span className="meta-val">{activeProp.auth}</span>
-                </div>
-                <div className="banner-meta-item">
-                  <span className="meta-label">Master Plan</span>
-                  <span className="meta-val">{activeProp.master}</span>
-                </div>
-                <div className="banner-meta-item">
-                  <span className="meta-label">Parcel Identifier</span>
-                  <span className="meta-val">{activeProp.parcel}</span>
-                </div>
-              </div>
+          {/* ==================================================
+              ERROR
+          ================================================== */}
+          {error && (
+            <div
+              style={{
+                marginBottom: "20px",
+                padding: "14px 18px",
+                borderRadius: "10px",
+                background: "#fee2e2",
+                color: "#991b1b",
+                border: "1px solid #fecaca",
+                fontWeight: "600"
+              }}
+            >
+              {error}
             </div>
+          )}
 
-            <div className="banner-status-box">
-              <div className="compliance-status-tag">
-                {activeProp.status.includes("Violation") ? <XCircle size={20} /> : <CheckCircle size={20} />}
-                {activeProp.status}
-              </div>
-              <p style={{ fontSize: "13px", color: "#cbd5e1" }}>
-                {activeProp.statusDesc}
-              </p>
-              <button
+
+          {/* ==================================================
+              LOADING ZONING
+          ================================================== */}
+          {loadingZoning && (
+            <div
+              style={{
+                padding: "40px",
+                textAlign: "center",
+                fontWeight: "600"
+              }}
+            >
+              <Loader2
+                size={25}
+                className="animate-spin"
                 style={{
-                  marginTop: "8px", padding: "8px 16px", fontSize: "13px",
-                  background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)",
-                  color: "#fff", borderRadius: "var(--radius-md)", cursor: "pointer", display: "flex", gap: "6px", alignItems: "center"
+                  margin: "0 auto 10px"
                 }}
-                onClick={() => setShowCertificate(true)}
-              >
-                <Printer size={14} /> Print Certificate
-              </button>
-            </div>
-          </section>
+              />
 
-          <section className="metrics-row">
-            <div className="metric-card">
-              <span className="metric-title">Max Permissible FAR</span>
-              <span className="metric-value-huge">{activeProp.far}</span>
-              <span className="metric-sub">Floor Area Ratio Allowed</span>
+              Loading zoning information...
             </div>
-            <div className="metric-card">
-              <span className="metric-title">Max Height Limit</span>
-              <span className="metric-value-huge">{activeProp.height}</span>
-              <span className="metric-sub">Maximum building height</span>
-            </div>
-            <div className="metric-card">
-              <span className="metric-title">Max Ground Coverage</span>
-              <span className="metric-value-huge">{activeProp.coverage}</span>
-              <span className="metric-sub">Max Builtup Area of Plot</span>
-            </div>
-            <div className="metric-card">
-              <span className="metric-title">Min Plot Area Required</span>
-              <span className="metric-value-huge">{activeProp.minPlot}</span>
-              <span className="metric-sub">Sq. Ft. minimum plot size</span>
-            </div>
-          </section>
+          )}
 
-          <div className="dashboard-grid">
-            <div className="dashboard-card">
-              <div className="card-heading">
-                <Building className="text-primary" size={22} />
-                Permitted & Restricted Usage Rules
-              </div>
-              <div className="usage-list">
-                <div className="usage-item permitted">
-                  <CheckCircle className="usage-icon" size={18} />
-                  <div>
-                    <div className="usage-title">Primary Usage</div>
-                    <div className="usage-desc">{activeProp.allow}</div>
+
+          {/* ==================================================
+              ZONING CONTENT
+          ================================================== */}
+          {!loadingZoning && zoningData && (
+            <>
+
+              {/* ==================================================
+                  TOP BANNER
+              ================================================== */}
+              <section className="zoning-banner-card">
+
+                <div className="zoning-main-info">
+
+                  <span className="zone-code-tag">
+                    ZONING CATEGORY:{" "}
+                    {zoningData.zoningCategory ?? "N/A"}
+                  </span>
+
+                  <h2>
+                    {zoningData.zoningClass ?? "N/A"}
+                  </h2>
+
+                  <p>
+                    {zoningData.specialRegulations ??
+                      "Zoning information retrieved from the property record."}
+                  </p>
+
+
+                  {/* Property information */}
+                  <div
+                    className="banner-meta-list"
+                    style={{
+                      marginBottom: "18px"
+                    }}
+                  >
+
+                    <div className="banner-meta-item">
+                      <span className="meta-label">
+                        Property
+                      </span>
+
+                      <span className="meta-val">
+                        {zoningData.propertyName ?? "N/A"}
+                      </span>
+                    </div>
+
+                    <div className="banner-meta-item">
+                      <span className="meta-label">
+                        Address
+                      </span>
+
+                      <span className="meta-val">
+                        {zoningData.address ?? "N/A"}
+                      </span>
+                    </div>
+
+                    <div className="banner-meta-item">
+                      <span className="meta-label">
+                        Location
+                      </span>
+
+                      <span className="meta-val">
+                        {[
+                          zoningData.city,
+                          zoningData.state
+                        ]
+                          .filter(Boolean)
+                          .join(", ") || "N/A"}
+                      </span>
+                    </div>
+
                   </div>
-                </div>
-              </div>
-            </div>
 
-            <div className="dashboard-card">
-              <div className="card-heading">
-                <Ruler className="text-primary" size={22} />
-                Mandatory Setback Requirements
-              </div>
-              <div className="setback-grid">
-                <div className="setback-box">
-                  <span className="setback-label">Front Setback</span>
-                  <span className="setback-value">{activeProp.frontSetback}</span>
+
+                  {/* Planning information */}
+                  <div className="banner-meta-list">
+
+                    <div className="banner-meta-item">
+                      <span className="meta-label">
+                        Planning Authority
+                      </span>
+
+                      <span className="meta-val">
+                        {zoningData.planningAuthority ?? "N/A"}
+                      </span>
+                    </div>
+
+                    <div className="banner-meta-item">
+                      <span className="meta-label">
+                        Master Plan Revision
+                      </span>
+
+                      <span className="meta-val">
+                        {zoningData.masterPlan ?? "N/A"}
+                      </span>
+                    </div>
+
+                    <div className="banner-meta-item">
+                      <span className="meta-label">
+                        Parcel Identifier
+                      </span>
+
+                      <span className="meta-val">
+                        {zoningData.parcelIdentifier ?? "N/A"}
+                      </span>
+                    </div>
+
+                  </div>
+
                 </div>
-                <div className="setback-box">
-                  <span className="setback-label">Rear Setback</span>
-                  <span className="setback-value">{activeProp.rearSetback}</span>
+
+
+                {/* ==================================================
+                    COMPLIANCE
+                ================================================== */}
+                <div className="banner-status-box">
+
+                  <div className="compliance-status-tag">
+
+                    <CheckCircle size={20} />
+
+                    {zoningData.complianceStatus ?? "N/A"}
+
+                  </div>
+
+                  <p
+                    style={{
+                      fontSize: "13px",
+                      color: "#cbd5e1"
+                    }}
+                  >
+                    Zoning compliance information retrieved from
+                    the property record.
+                  </p>
+
+                  <button
+                    style={{
+                      marginTop: "8px",
+                      padding: "8px 16px",
+                      fontSize: "13px",
+                      background: "rgba(255,255,255,0.15)",
+                      border: "1px solid rgba(255,255,255,0.3)",
+                      color: "#fff",
+                      borderRadius: "var(--radius-md)",
+                      cursor: "pointer"
+                    }}
+                    onClick={downloadCertificate}
+                  >
+                    Download Certificate
+                  </button>
+
                 </div>
-                <div className="setback-box">
-                  <span className="setback-label">Side (Left)</span>
-                  <span className="setback-value">{activeProp.sideLeft}</span>
+
+              </section>
+
+
+              {/* ==================================================
+                  METRICS
+              ================================================== */}
+              <section className="metrics-row">
+
+                <div className="metric-card">
+                  <span className="metric-title">
+                    Max Permissible FAR
+                  </span>
+
+                  <span className="metric-value-huge">
+                    {zoningData.maxFar ?? "N/A"}
+                  </span>
+
+                  <span className="metric-sub">
+                    Floor Area Ratio Allowed
+                  </span>
                 </div>
-                <div className="setback-box">
-                  <span className="setback-label">Side (Right)</span>
-                  <span className="setback-value">{activeProp.sideRight}</span>
+
+
+                <div className="metric-card">
+                  <span className="metric-title">
+                    Max Height Limit
+                  </span>
+
+                  <span className="metric-value-huge">
+                    {zoningData.maxHeight ?? "N/A"}
+                  </span>
+
+                  <span className="metric-sub">
+                    Maximum permitted height
+                  </span>
                 </div>
+
+
+                <div className="metric-card">
+                  <span className="metric-title">
+                    Max Ground Coverage
+                  </span>
+
+                  <span className="metric-value-huge">
+                    {zoningData.groundCoverage ?? "N/A"}
+                  </span>
+
+                  <span className="metric-sub">
+                    Maximum ground coverage
+                  </span>
+                </div>
+
+
+                <div className="metric-card">
+                  <span className="metric-title">
+                    Min Plot Area Required
+                  </span>
+
+                  <span className="metric-value-huge">
+                    {zoningData.minPlotArea ?? "N/A"}
+                  </span>
+
+                  <span className="metric-sub">
+                    Minimum required plot area
+                  </span>
+                </div>
+
+              </section>
+
+
+              {/* ==================================================
+                  TWO COLUMN DETAILS
+              ================================================== */}
+              <div className="dashboard-grid">
+
+
+                {/* PERMITTED / RESTRICTED */}
+                <div className="dashboard-card">
+
+                  <div className="card-heading">
+                    <Building
+                      className="text-primary"
+                      size={22}
+                    />
+
+                    Permitted & Restricted Usage Rules
+                  </div>
+
+
+                  <div className="usage-list">
+
+                    <div className="usage-item permitted">
+
+                      <CheckCircle
+                        className="usage-icon"
+                        size={18}
+                      />
+
+                      <div>
+                        <div className="usage-title">
+                          Permitted Usage
+                        </div>
+
+                        <div className="usage-desc">
+                          {zoningData.permittedUsage ?? "N/A"}
+                        </div>
+                      </div>
+
+                    </div>
+
+
+                    <div className="usage-item prohibited">
+
+                      <XCircle
+                        className="usage-icon"
+                        size={18}
+                      />
+
+                      <div>
+                        <div className="usage-title">
+                          Restricted Usage
+                        </div>
+
+                        <div className="usage-desc">
+                          {zoningData.restrictedUsage ?? "N/A"}
+                        </div>
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+
+                {/* SETBACK */}
+                <div className="dashboard-card">
+
+                  <div className="card-heading">
+                    <Ruler
+                      className="text-primary"
+                      size={22}
+                    />
+
+                    Mandatory Setback Requirements
+                  </div>
+
+
+                  <div className="setback-grid">
+
+                    <div className="setback-box">
+                      <span className="setback-label">
+                        Front Setback
+                      </span>
+
+                      <span className="setback-value">
+                        {zoningData.frontSetback ?? "N/A"}
+                      </span>
+
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          color: "var(--text-muted)"
+                        }}
+                      >
+                        Road facing setback
+                      </span>
+                    </div>
+
+
+                    <div className="setback-box">
+                      <span className="setback-label">
+                        Rear Boundary Setback
+                      </span>
+
+                      <span className="setback-value">
+                        {zoningData.rearSetback ?? "N/A"}
+                      </span>
+
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          color: "var(--text-muted)"
+                        }}
+                      >
+                        Rear boundary clearance
+                      </span>
+                    </div>
+
+
+                    <div className="setback-box">
+                      <span className="setback-label">
+                        Left Setback
+                      </span>
+
+                      <span className="setback-value">
+                        {zoningData.leftSetback ?? "N/A"}
+                      </span>
+
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          color: "var(--text-muted)"
+                        }}
+                      >
+                        Left side clearance
+                      </span>
+                    </div>
+
+
+                    <div className="setback-box">
+                      <span className="setback-label">
+                        Right Setback
+                      </span>
+
+                      <span className="setback-value">
+                        {zoningData.rightSetback ?? "N/A"}
+                      </span>
+
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          color: "var(--text-muted)"
+                        }}
+                      >
+                        Right side clearance
+                      </span>
+                    </div>
+
+                  </div>
+
+
+                  {/* SPECIAL REGULATIONS */}
+                  <div
+                    style={{
+                      background: "var(--bg-main)",
+                      padding: "16px",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--border)",
+                      marginTop: "18px"
+                    }}
+                  >
+
+                    <div
+                      style={{
+                        fontWeight: "700",
+                        marginBottom: "8px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px"
+                      }}
+                    >
+                      <FileCheck
+                        size={16}
+                        className="text-primary"
+                      />
+
+                      Special Regulations
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        color: "var(--text-muted)",
+                        lineHeight: "1.6"
+                      }}
+                    >
+                      {zoningData.specialRegulations ??
+                        "No special regulations available."}
+                    </div>
+
+                  </div>
+
+                </div>
+
               </div>
 
-              <div style={{ background: "var(--bg-main)", padding: "16px", borderRadius: "var(--radius-md)", border: "1px solid var(--border)", marginTop: "16px" }}>
-                <div style={{ fontWeight: "700", marginBottom: "6px", display: "flex", alignItems: "center", gap: "8px" }}>
-                  <FileCheck size={16} className="text-primary" />
-                  Overlay District Regulations
-                </div>
-                <ul style={{ paddingLeft: "20px", fontSize: "13px", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "4px" }}>
-                  <li>{activeProp.overlay1}</li>
-                  <li>{activeProp.overlay2}</li>
-                  <li>{activeProp.overlay3}</li>
-                </ul>
-              </div>
-            </div>
-          </div>
 
-          <section className="map-simulation-container">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <Compass size={22} className="text-primary" />
-                <div>
-                  <h3 style={{ fontSize: "18px", fontWeight: "700" }}>Spatial GIS Zoning Boundary</h3>
-                  <span style={{ fontSize: "13px", color: "#94a3b8" }}>{activeProp.parcel} - {activeProp.location}</span>
-                </div>
-              </div>
-            </div>
+              {/* ==================================================
+                  GIS MAP
+              ================================================== */}
+              <section className="map-simulation-container">
 
-            <div className="simulated-map-view">
-              <div className="zone-plot-overlay">
-                Plot ({activeProp.code})
-              </div>
-              <div style={{ fontSize: "12px", color: "#94a3b8" }}>📍 Coordinates: {activeProp.coord}</div>
-            </div>
-          </section>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center"
+                  }}
+                >
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px"
+                    }}
+                  >
+
+                    <Compass
+                      size={22}
+                      className="text-primary"
+                    />
+
+                    <div>
+
+                      <h3
+                        style={{
+                          fontSize: "18px",
+                          fontWeight: "700"
+                        }}
+                      >
+                        Spatial GIS Zoning Boundary
+                      </h3>
+
+                      <span
+                        style={{
+                          fontSize: "13px",
+                          color: "#94a3b8"
+                        }}
+                      >
+                        Parcel:{" "}
+                        {zoningData.parcelIdentifier ?? "N/A"}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+
+                  <button
+                    style={{
+                      width: "auto",
+                      padding: "8px 16px",
+                      background: "#334155",
+                      color: "#fff",
+                      fontSize: "13px",
+                      border: "1px solid #475569",
+                      cursor: "pointer"
+                    }}
+                    onClick={() =>
+                      setIsMapExpanded(!isMapExpanded)
+                    }
+                  >
+
+                    <Maximize2
+                      size={14}
+                      style={{
+                        marginRight: "6px"
+                      }}
+                    />
+
+                    {isMapExpanded
+                      ? "Collapse GIS Map"
+                      : "Expand GIS Map"}
+
+                  </button>
+
+                </div>
+
+
+                <div
+                  className="simulated-map-view"
+                  style={{
+                    position: "relative",
+                    minHeight: isMapExpanded
+                      ? "500px"
+                      : "275px",
+                    transition: "all 0.3s ease"
+                  }}
+                >
+
+                  <div
+                    style={{
+                      position: "absolute",
+                      width: "310px",
+                      height: "220px",
+                      border: "3px dashed #f59e0b",
+                      left: "50%",
+                      top: "50%",
+                      transform:
+                        "translate(-50%, -50%)",
+                      borderRadius: "10px"
+                    }}
+                  />
+
+                  <div
+                    style={{
+                      position: "absolute",
+                      width: "260px",
+                      height: "170px",
+                      border: "3px solid #6366f1",
+                      left: "50%",
+                      top: "50%",
+                      transform:
+                        "translate(-50%, -50%)",
+                      borderRadius: "8px"
+                    }}
+                  />
+
+                  <div
+                    style={{
+                      position: "absolute",
+                      width: "180px",
+                      height: "110px",
+                      border: "3px solid #10b981",
+                      left: "50%",
+                      top: "50%",
+                      transform:
+                        "translate(-50%, -50%)",
+                      borderRadius: "5px"
+                    }}
+                  />
+
+                  <div className="zone-plot-overlay">
+                    {zoningData.parcelIdentifier ??
+                      "Property Parcel"}
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      color: "#94a3b8"
+                    }}
+                  >
+                    Zoning boundary visualization
+                  </div>
+
+                </div>
+
+
+                <div className="map-legend">
+
+                  <div className="legend-item">
+                    <span
+                      className="legend-dot"
+                      style={{
+                        background: "#6366f1"
+                      }}
+                    />
+
+                    Property Parcel Boundary
+                  </div>
+
+                  <div className="legend-item">
+                    <span
+                      className="legend-dot"
+                      style={{
+                        background: "#10b981"
+                      }}
+                    />
+
+                    Approved Building Footprint
+                  </div>
+
+                  <div className="legend-item">
+                    <span
+                      className="legend-dot"
+                      style={{
+                        background: "#f59e0b"
+                      }}
+                    />
+
+                    Setback Line Clearance
+                  </div>
+
+                </div>
+
+              </section>
+
+            </>
+          )}
+
         </main>
-
-        {showCertificate && (
-          <div className="receipt-modal-backdrop" onClick={() => setShowCertificate(false)}>
-            <div className="receipt-modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="receipt-modal-actions no-print">
-                <button className="receipt-print-btn" onClick={() => window.print()}>
-                  <Printer size={16} /> Print / Save as PDF
-                </button>
-                <button className="receipt-close-btn" onClick={() => setShowCertificate(false)}>
-                  <X size={16} /> Close
-                </button>
-              </div>
-
-              <div id="printable-zoning-certificate" className="receipt-document" style={{ padding: "40px", width: "100%", background: "white", border: "none", margin: 0 }}>
-                  <div style={{ textAlign: "center", marginBottom: "30px", borderBottom: "2px solid #1e293b", paddingBottom: "20px" }}>
-                    <h1 style={{ margin: 0, fontSize: "28px", color: "#0f172a" }}>OFFICIAL ZONING & LAND USE CERTIFICATE</h1>
-                    <p style={{ margin: "10px 0 0", fontSize: "16px", color: "#64748b" }}>{activeProp.auth} - {activeProp.master}</p>
-                  </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "40px", marginBottom: "30px" }}>
-                    <div>
-                      <h3 style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "10px", color: "#334155" }}>Property Information</h3>
-                      <p><strong>Property:</strong> {activeProp.title}</p>
-                      <p><strong>Location:</strong> {activeProp.location}</p>
-                      <p><strong>Parcel ID:</strong> {activeProp.parcel}</p>
-                      <p><strong>Coordinates:</strong> {activeProp.coord}</p>
-                    </div>
-                    <div>
-                      <h3 style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "10px", color: "#334155" }}>Zoning Classification</h3>
-                      <p><strong>Zone Code:</strong> {activeProp.code}</p>
-                      <p><strong>Description:</strong> {activeProp.desc}</p>
-                      <p><strong>Compliance Status:</strong> {activeProp.status}</p>
-                    </div>
-                  </div>
-
-                  <div style={{ marginBottom: "30px" }}>
-                    <h3 style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "10px", color: "#334155" }}>Dimensional Standards & Limits</h3>
-                    <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}>
-                      <tbody>
-                        <tr>
-                          <td style={{ padding: "10px", border: "1px solid #e2e8f0", background: "#f8fafc", width: "25%" }}><strong>Max FAR:</strong></td>
-                          <td style={{ padding: "10px", border: "1px solid #e2e8f0", width: "25%" }}>{activeProp.far}</td>
-                          <td style={{ padding: "10px", border: "1px solid #e2e8f0", background: "#f8fafc", width: "25%" }}><strong>Max Height:</strong></td>
-                          <td style={{ padding: "10px", border: "1px solid #e2e8f0", width: "25%" }}>{activeProp.height}</td>
-                        </tr>
-                        <tr>
-                          <td style={{ padding: "10px", border: "1px solid #e2e8f0", background: "#f8fafc" }}><strong>Max Coverage:</strong></td>
-                          <td style={{ padding: "10px", border: "1px solid #e2e8f0" }}>{activeProp.coverage}</td>
-                          <td style={{ padding: "10px", border: "1px solid #e2e8f0", background: "#f8fafc" }}><strong>Min Plot Size:</strong></td>
-                          <td style={{ padding: "10px", border: "1px solid #e2e8f0" }}>{activeProp.minPlot} sq.ft.</td>
-                        </tr>
-                        <tr>
-                          <td style={{ padding: "10px", border: "1px solid #e2e8f0", background: "#f8fafc" }}><strong>Front Setback:</strong></td>
-                          <td style={{ padding: "10px", border: "1px solid #e2e8f0" }}>{activeProp.frontSetback}</td>
-                          <td style={{ padding: "10px", border: "1px solid #e2e8f0", background: "#f8fafc" }}><strong>Rear Setback:</strong></td>
-                          <td style={{ padding: "10px", border: "1px solid #e2e8f0" }}>{activeProp.rearSetback}</td>
-                        </tr>
-                        <tr>
-                          <td style={{ padding: "10px", border: "1px solid #e2e8f0", background: "#f8fafc" }}><strong>Side Left:</strong></td>
-                          <td style={{ padding: "10px", border: "1px solid #e2e8f0" }}>{activeProp.sideLeft}</td>
-                          <td style={{ padding: "10px", border: "1px solid #e2e8f0", background: "#f8fafc" }}><strong>Side Right:</strong></td>
-                          <td style={{ padding: "10px", border: "1px solid #e2e8f0" }}>{activeProp.sideRight}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div style={{ marginBottom: "30px" }}>
-                    <h3 style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "10px", color: "#334155" }}>Overlay Zones & Special Conditions</h3>
-                    <ul style={{ margin: "10px 0 0", paddingLeft: "20px", color: "#334155", lineHeight: "1.6" }}>
-                      <li>{activeProp.overlay1}</li>
-                      <li>{activeProp.overlay2}</li>
-                      <li>{activeProp.overlay3}</li>
-                    </ul>
-                  </div>
-
-                  <div style={{ marginTop: "50px", textAlign: "center", borderTop: "1px solid #cbd5e1", paddingTop: "20px", color: "#64748b", fontSize: "14px" }}>
-                    <p>This is a computer-generated zoning audit. Valid for due diligence purposes.</p>
-                    <p><strong>Printed on:</strong> {new Date().toLocaleString("en-IN")}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-        )}
       </div>
     </ProtectedRoute>
   );
