@@ -62,7 +62,7 @@ export default function PropertiesPage() {
       }
 
       const response = await fetch(
-        "http://localhost:8080/api/properties",
+        "/api/properties",
         {
           method: "GET",
           headers,
@@ -177,8 +177,8 @@ export default function PropertiesPage() {
       }
 
       const url = editingProperty
-        ? `http://localhost:8080/api/properties/${editingProperty.propertyId}`
-        : "http://localhost:8080/api/properties";
+        ? `/api/properties/${editingProperty.propertyId}`
+        : "/api/properties";
 
       const method = editingProperty ? "PUT" : "POST";
 
@@ -238,7 +238,7 @@ export default function PropertiesPage() {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        `http://localhost:8080/api/properties/${propertyId}`,
+        `/api/properties/${propertyId}`,
         {
           method: "DELETE",
           headers: {

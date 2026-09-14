@@ -39,7 +39,7 @@ export default function AddPropertyPage() {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        "http://localhost:8080/api/properties",
+        "/api/properties",
         {
           method: "POST",
           headers: {

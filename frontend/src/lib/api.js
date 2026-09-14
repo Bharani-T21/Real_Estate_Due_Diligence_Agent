@@ -1,6 +1,8 @@
 // ─── API Configuration ────────────────────────────────────────────────────────
 // Use empty string so requests go through Next.js proxy (avoids CORS issues)
-export const API_BASE = typeof window !== "undefined" ? "" : "http://localhost:8080";
+// Client-side (browser): use "" so requests go through Next.js proxy rewrites
+// Server-side (SSR): use BACKEND_URL env var pointing to the deployed backend
+export const API_BASE = typeof window !== "undefined" ? "" : (process.env.BACKEND_URL || "http://localhost:8080");
 
 // ─── Token Helpers ────────────────────────────────────────────────────────────
 export const getToken = () => {

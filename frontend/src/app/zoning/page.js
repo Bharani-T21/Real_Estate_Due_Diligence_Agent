@@ -61,7 +61,7 @@ export default function ZoningPage() {
         }
 
         const response = await fetch(
-          "http://localhost:8080/api/properties",
+          "/api/properties",
           {
             method: "GET",
             headers
@@ -119,7 +119,7 @@ export default function ZoningPage() {
         }
 
         const response = await fetch(
-          `http://localhost:8080/api/zoning/${selectedProperty}`,
+          `/api/zoning/${selectedProperty}`,
           {
             method: "GET",
             headers

@@ -33,7 +33,7 @@ export default function FloodZonePage() {
         const token = localStorage.getItem("token");
 
         const response = await fetch(
-          "http://localhost:8080/api/properties",
+          "/api/properties",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -93,7 +93,7 @@ export default function FloodZonePage() {
         const token = localStorage.getItem("token");
 
         const response = await fetch(
-          `http://localhost:8080/api/flood-zone/${selectedProperty}`,
+          `/api/flood-zone/${selectedProperty}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

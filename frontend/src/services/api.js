@@ -1,4 +1,6 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+// Use empty string so requests go through Next.js server-side proxy (next.config.mjs rewrites)
+// This works in both development (dev server proxies to localhost:8080) and production (proxies to BACKEND_URL)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 /**
  * Helper to fetch data with optional Bearer JWT auth token from localStorage

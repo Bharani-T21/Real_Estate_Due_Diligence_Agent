@@ -38,7 +38,7 @@ export default function DueDiligenceReport() {
     if (!report || !report.propertyId) return;
     try {
       const token = localStorage.getItem("token");
-      const url = `http://localhost:8080/api/due-diligence/${report.propertyId}/export/pdf`;
+      const url = `/api/due-diligence/${report.propertyId}/export/pdf`;
       const res = await fetch(url, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
@@ -58,7 +58,7 @@ export default function DueDiligenceReport() {
     if (!report || !report.propertyId) return;
     try {
       const token = localStorage.getItem("token");
-      const url = `http://localhost:8080/api/due-diligence/${report.propertyId}/export/excel`;
+      const url = `/api/due-diligence/${report.propertyId}/export/excel`;
       const res = await fetch(url, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });

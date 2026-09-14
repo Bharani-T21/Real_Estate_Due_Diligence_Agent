@@ -24,7 +24,7 @@ import autoTable from "jspdf-autotable";
 
 import "./permits.css";
 
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL = ""; // Routes through Next.js proxy → backend
 
 export default function PermitsEnvironmentalPage() {
   const [activeTab, setActiveTab] = useState("permits");

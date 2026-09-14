@@ -199,7 +199,7 @@ function ReportContent() {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        `http://localhost:8080/api/due-diligence/${selectedId}/export/pdf`,
+        `/api/due-diligence/${selectedId}/export/pdf`,
         {
           method: "GET",
           headers: {
