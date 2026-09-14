@@ -17,7 +17,7 @@ public class ZoningController {
 
     // Get zoning information for a property
     @GetMapping("/{propertyId}")
-    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
+    @PreAuthorize("isAuthenticated()")
     public ZoningResponse getZoning(
             @PathVariable Long propertyId) {
 

@@ -21,7 +21,7 @@ public class PermitController {
     }
 
     @GetMapping("/{propertyId}")
-    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<PermitResponse>> getPermits(
             @PathVariable Long propertyId) {
 

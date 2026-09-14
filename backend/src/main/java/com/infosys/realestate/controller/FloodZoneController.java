@@ -25,7 +25,7 @@ public class FloodZoneController {
     private PropertyRepository propertyRepository;
 
     @GetMapping("/{propertyId}")
-    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
+    @PreAuthorize("isAuthenticated()")
     public FloodZoneResponse getFloodZone(
             @PathVariable Long propertyId) {
 
