@@ -1,8 +1,13 @@
 // ─── API Configuration ────────────────────────────────────────────────────────
 // Use empty string so requests go through Next.js proxy (avoids CORS issues)
 // Client-side (browser): use "" so requests go through Next.js proxy rewrites
-// Server-side (SSR): use BACKEND_URL env var pointing to the deployed backend
-export const API_BASE = typeof window !== "undefined" ? "" : (process.env.BACKEND_URL || "http://localhost:8080");
+// Server-side (SSR): use BACKEND_URL env var pointing to the deployed backend.
+// Render's fromService gives a bare hostname — prepend https:// if no protocol present.
+export const API_BASE = typeof window !== "undefined" ? "" : (() => {
+  const raw = process.env.BACKEND_URL || "http://localhost:8080";
+  if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
+  return "https://" + raw;
+})();
 
 // ─── Token Helpers ────────────────────────────────────────────────────────────
 export const getToken = () => {

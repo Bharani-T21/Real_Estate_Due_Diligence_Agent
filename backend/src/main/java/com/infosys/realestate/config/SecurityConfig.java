@@ -24,6 +24,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
@@ -61,11 +62,25 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:3000",
-                "http://localhost:8080",
-                frontendOrigin != null ? frontendOrigin : "http://localhost:3000"
-        ));
+
+        // Build allowed origins list dynamically so Render's fromService
+        // bare-hostname format (e.g. "real-estate-frontend.onrender.com")
+        // and full-URL format (e.g. "https://real-estate-frontend.onrender.com")
+        // are both accepted without hard-coding any specific domain.
+        List<String> origins = new ArrayList<>();
+        origins.add("http://localhost:3000");
+        if (frontendOrigin != null && !frontendOrigin.isBlank()) {
+            if (frontendOrigin.startsWith("http://") || frontendOrigin.startsWith("https://")) {
+                // Full URL provided — use as-is
+                origins.add(frontendOrigin);
+            } else {
+                // Bare hostname from Render's fromService — add both protocol variants
+                origins.add("https://" + frontendOrigin);
+                origins.add("http://"  + frontendOrigin);
+            }
+        }
+
+        configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

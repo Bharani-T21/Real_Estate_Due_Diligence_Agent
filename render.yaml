@@ -6,7 +6,7 @@
     region: oregon
 
 services:
-  # Spring Boot Backend
+  # ─── Spring Boot Backend ─────────────────────────────────────────────────────
   - type: web
     name: real-estate-backend
     runtime: docker
@@ -17,6 +17,7 @@ services:
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
+      # Database — populated automatically from the linked free PostgreSQL instance
       - key: DB_HOST
         fromDatabase:
           name: real-estate-db
@@ -37,12 +38,19 @@ services:
         fromDatabase:
           name: real-estate-db
           property: password
+      # JWT secret — Render generates a unique secure value at Blueprint creation
       - key: JWT_SECRET
         generateValue: true
+      # CORS allowed origin — set to the actual frontend hostname Render assigns.
+      # Render's fromService returns a bare hostname (no protocol); SecurityConfig
+      # is updated to handle both bare hostname and full https:// URL formats.
       - key: FRONTEND_ORIGIN
-        value: https://real-estate-frontend.onrender.com
+        fromService:
+          name: real-estate-frontend
+          type: web
+          property: host
 
-  # Next.js Frontend
+  # ─── Next.js Frontend ────────────────────────────────────────────────────────
   - type: web
     name: real-estate-frontend
     runtime: docker
@@ -51,9 +59,10 @@ services:
     plan: free
     region: oregon
     envVars:
+      # Backend hostname for Next.js server-side rewrites (next.config.mjs).
+      # Render fromService gives a bare hostname; next.config.mjs prepends https://.
       - key: BACKEND_URL
         fromService:
           name: real-estate-backend
           type: web
           property: host
-          envVarKey: BACKEND_URL
