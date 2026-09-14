@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -35,6 +36,12 @@ public class DataInitializer implements CommandLineRunner {
     private PermitRepository permitRepository;
 
     @Autowired
+    private DueDiligenceReportRepository dueDiligenceReportRepository;
+
+    @Autowired
+    private RiskAssessmentRepository riskAssessmentRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Override
@@ -59,57 +66,69 @@ public class DataInitializer implements CommandLineRunner {
             return userRepository.save(u);
         });
 
-        if (propertyRepository.count() < 4) {
-            if (!propertyRepository.existsById(1L)) {
-                Property p1 = new Property();
-                p1.setPropertyName("Luxury Villa");
-                p1.setAddress("12, Beach Road, ECR");
-                p1.setCity("Chennai");
-                p1.setState("Tamil Nadu");
-                p1.setZipCode("600041");
-                p1.setPropertyType("Villa");
-                p1.setCreatedBy(adminUser);
-                propertyRepository.save(p1);
-            }
-            if (!propertyRepository.existsById(2L)) {
-                Property p2 = new Property();
-                p2.setPropertyName("Modern Apartment");
-                p2.setAddress("405, Silicon Heights, Outer Ring Road");
-                p2.setCity("Bangalore");
-                p2.setState("Karnataka");
-                p2.setZipCode("560103");
-                p2.setPropertyType("Apartment");
-                p2.setCreatedBy(adminUser);
-                propertyRepository.save(p2);
-            }
-            if (!propertyRepository.existsById(3L)) {
-                Property p3 = new Property();
-                p3.setPropertyName("Independent House");
-                p3.setAddress("88, Jubilee Hills, Road No. 36");
-                p3.setCity("Hyderabad");
-                p3.setState("Telangana");
-                p3.setZipCode("500033");
-                p3.setPropertyType("House");
-                p3.setCreatedBy(adminUser);
-                propertyRepository.save(p3);
-            }
-            if (!propertyRepository.existsById(4L)) {
-                Property p4 = new Property();
-                p4.setPropertyName("Premium Flat");
-                p4.setAddress("102, Green Glen Layout, Bellandur");
-                p4.setCity("Bangalore");
-                p4.setState("Karnataka");
-                p4.setZipCode("560103");
-                p4.setPropertyType("Flat");
-                p4.setCreatedBy(adminUser);
-                propertyRepository.save(p4);
+        // Ensure the exact 4 baseline properties exist
+        if (!propertyRepository.existsById(1L)) {
+            Property p1 = new Property();
+            p1.setPropertyName("Luxury Villa");
+            p1.setAddress("12, Beach Road, ECR");
+            p1.setCity("Chennai");
+            p1.setState("Tamil Nadu");
+            p1.setZipCode("600041");
+            p1.setPropertyType("Villa");
+            p1.setCreatedBy(adminUser);
+            propertyRepository.save(p1);
+        }
+        if (!propertyRepository.existsById(2L)) {
+            Property p2 = new Property();
+            p2.setPropertyName("Modern Apartment");
+            p2.setAddress("405, Silicon Heights, Outer Ring Road");
+            p2.setCity("Bangalore");
+            p2.setState("Karnataka");
+            p2.setZipCode("560103");
+            p2.setPropertyType("Apartment");
+            p2.setCreatedBy(adminUser);
+            propertyRepository.save(p2);
+        }
+        if (!propertyRepository.existsById(3L)) {
+            Property p3 = new Property();
+            p3.setPropertyName("Independent House");
+            p3.setAddress("88, Jubilee Hills, Road No. 36");
+            p3.setCity("Hyderabad");
+            p3.setState("Telangana");
+            p3.setZipCode("500033");
+            p3.setPropertyType("House");
+            p3.setCreatedBy(adminUser);
+            propertyRepository.save(p3);
+        }
+        if (!propertyRepository.existsById(4L)) {
+            Property p4 = new Property();
+            p4.setPropertyName("Premium Flat");
+            p4.setAddress("102, Green Glen Layout, Bellandur");
+            p4.setCity("Bangalore");
+            p4.setState("Karnataka");
+            p4.setZipCode("560103");
+            p4.setPropertyType("Flat");
+            p4.setCreatedBy(adminUser);
+            propertyRepository.save(p4);
+        }
+
+        // Clean up any extraneous properties with ID > 4 to maintain exact 4 properties
+        List<Property> allProps = propertyRepository.findAll();
+        for (Property prop : allProps) {
+            if (prop.getPropertyId() > 4L) {
+                zoningRepository.findByProperty_PropertyId(prop.getPropertyId()).ifPresent(zoningRepository::delete);
+                propertyTaxHistoryRepository.deleteAll(propertyTaxHistoryRepository.findByProperty_PropertyId(prop.getPropertyId()));
+                floodZoneRepository.findByPropertyPropertyId(prop.getPropertyId()).ifPresent(floodZoneRepository::delete);
+                permitRepository.deleteAll(permitRepository.findByPropertyPropertyId(prop.getPropertyId()));
+                propertyRepository.delete(prop);
             }
         }
 
-        // Seed rich due diligence data for all properties
-        List<Property> allProperties = propertyRepository.findAll();
-        for (Property prop : allProperties) {
+        // Seed rich due diligence data for the 4 baseline properties
+        List<Property> baselineProps = propertyRepository.findAll();
+        for (Property prop : baselineProps) {
             Long pid = prop.getPropertyId();
+            if (pid > 4L) continue;
 
             // 1. Seed Zoning if not exists
             if (zoningRepository.findByProperty_PropertyId(pid).isEmpty()) {
@@ -205,6 +224,87 @@ public class DataInitializer implements CommandLineRunner {
                 p2.setInspector("M. Davis (Fire Marshal)");
                 p2.setNotes("Final occupancy inspection passed. Fire exits, alarms, and life safety measures certified.");
                 permitRepository.save(p2);
+            }
+
+            // 5. Seed Due Diligence Report & Risk Assessment with exact baseline scores
+            if (dueDiligenceReportRepository.findByPropertyPropertyId(pid).isEmpty()) {
+                DueDiligenceReport report = new DueDiligenceReport();
+                report.setProperty(prop);
+                report.setRequestedBy(adminUser);
+                report.setCreatedAt(LocalDateTime.now().minusDays(2));
+                report.setCompletedAt(LocalDateTime.now().minusDays(2));
+                report.setStatus("COMPLETED");
+                report.setDurationMs(1420L);
+
+                RiskAssessment ra = new RiskAssessment();
+                ra.setProperty(prop);
+                ra.setCreatedAt(LocalDateTime.now().minusDays(2));
+                ra.setAssessedAt(LocalDateTime.now().minusDays(2));
+
+                if (pid == 1L) {
+                    report.setRiskScore(98);
+                    report.setRiskLevel("LOW");
+                    report.setReportSnapshot("{\"trustScore\":98,\"riskLevel\":\"LOW\",\"summary\":\"Clean ownership history, valid registered deed, tax paid up to date, zero liens/encumbrances. Highly recommended for acquisition.\"}");
+                    
+                    ra.setRiskScore(98);
+                    ra.setOverallRiskScore(98);
+                    ra.setRiskLevel("LOW");
+                    ra.setTitleRiskScore(2);
+                    ra.setTaxRiskScore(0);
+                    ra.setZoningRiskScore(0);
+                    ra.setFloodRiskScore(0);
+                    ra.setEnvironmentalRiskScore(0);
+                    ra.setComments("Clean ownership history, valid registered deed, tax paid up to date, zero liens/encumbrances.");
+                    ra.setMitigationRecommendations("Proceed with purchase agreement; standard title deed registration recommended.");
+                } else if (pid == 2L) {
+                    report.setRiskScore(90);
+                    report.setRiskLevel("LOW");
+                    report.setReportSnapshot("{\"trustScore\":90,\"riskLevel\":\"LOW\",\"summary\":\"Ownership clear, municipal tax payments up to date. Recommended with low risk profile.\"}");
+                    
+                    ra.setRiskScore(90);
+                    ra.setOverallRiskScore(90);
+                    ra.setRiskLevel("LOW");
+                    ra.setTitleRiskScore(4);
+                    ra.setTaxRiskScore(3);
+                    ra.setZoningRiskScore(2);
+                    ra.setFloodRiskScore(1);
+                    ra.setEnvironmentalRiskScore(0);
+                    ra.setComments("Ownership clear, municipal tax payments up to date.");
+                    ra.setMitigationRecommendations("Verify latest society NOC before registration.");
+                } else if (pid == 3L) {
+                    report.setRiskScore(65);
+                    report.setRiskLevel("MEDIUM");
+                    report.setReportSnapshot("{\"trustScore\":65,\"riskLevel\":\"MEDIUM\",\"summary\":\"Pending probate verification and unrecorded inheritance transfer deed.\"}");
+                    
+                    ra.setRiskScore(65);
+                    ra.setOverallRiskScore(65);
+                    ra.setRiskLevel("CONCERNS_FOUND");
+                    ra.setTitleRiskScore(20);
+                    ra.setTaxRiskScore(10);
+                    ra.setZoningRiskScore(3);
+                    ra.setFloodRiskScore(2);
+                    ra.setEnvironmentalRiskScore(0);
+                    ra.setComments("Pending probate verification and unrecorded inheritance transfer deed.");
+                    ra.setMitigationRecommendations("Require legal succession certificate from seller before executing sale agreement.");
+                } else if (pid == 4L) {
+                    report.setRiskScore(32);
+                    report.setRiskLevel("HIGH");
+                    report.setReportSnapshot("{\"trustScore\":32,\"riskLevel\":\"HIGH\",\"summary\":\"Active title litigation lawsuit, municipal tax attachment lien, and wetland buffer zone encroachment.\"}");
+                    
+                    ra.setRiskScore(32);
+                    ra.setOverallRiskScore(32);
+                    ra.setRiskLevel("HIGH_RISK");
+                    ra.setTitleRiskScore(35);
+                    ra.setTaxRiskScore(20);
+                    ra.setZoningRiskScore(8);
+                    ra.setFloodRiskScore(3);
+                    ra.setEnvironmentalRiskScore(2);
+                    ra.setComments("Active title litigation lawsuit, municipal tax attachment lien, and wetland buffer zone encroachment.");
+                    ra.setMitigationRecommendations("DO NOT PROCEED. Unresolved high-court litigation and municipal tax lien attach to parcel.");
+                }
+
+                riskAssessmentRepository.save(ra);
+                dueDiligenceReportRepository.save(report);
             }
         }
     }
