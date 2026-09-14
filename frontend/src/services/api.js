@@ -65,33 +65,25 @@ export const authApi = {
   },
   register: async (userData) => {
     try {
-      // Call the original registration endpoint
-      const registerResponse = await request("/api/users", {
+      // Call standard registration endpoint
+      const registerResponse = await request("/auth/register", {
         method: "POST",
         body: JSON.stringify({
           name: userData.name,
           email: userData.email,
           password: userData.password,
+          role: userData.role || "BUYER",
         }),
       });
-      // After successful registration, automatically log in to obtain a JWT token
+      // After successful registration, log in to obtain JWT token
       const loginResponse = await request("/auth/login", {
         method: "POST",
         body: JSON.stringify({ email: userData.email, password: userData.password }),
       });
-      // Return a combined response containing token and user info
       return { ...registerResponse, token: loginResponse?.token };
     } catch (err) {
       console.warn("Backend registration fallback:", err.message);
-      // Synthetic response for dev when backend DB is unavailable
-      const mockToken = "mock_jwt_dev_" + Date.now();
-      return {
-        userId: Date.now(),
-        name: userData.name,
-        email: userData.email,
-        token: mockToken,
-        isFallback: true,
-      };
+      throw err;
     }
   },
 };
