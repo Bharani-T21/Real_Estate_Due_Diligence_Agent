@@ -6,6 +6,7 @@
 export const API_BASE = typeof window !== "undefined" ? "" : (() => {
   const raw = process.env.BACKEND_URL || "http://localhost:8080";
   if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
+  if (!raw.includes(".")) return `https://${raw}.onrender.com`;
   return "https://" + raw;
 })();
 

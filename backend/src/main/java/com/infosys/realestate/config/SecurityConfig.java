@@ -74,9 +74,13 @@ public class SecurityConfig {
                 // Full URL provided — use as-is
                 origins.add(frontendOrigin);
             } else {
-                // Bare hostname from Render's fromService — add both protocol variants
+                // Bare hostname from Render's fromService — add protocol and .onrender.com variants
                 origins.add("https://" + frontendOrigin);
                 origins.add("http://"  + frontendOrigin);
+                if (!frontendOrigin.contains(".")) {
+                    origins.add("https://" + frontendOrigin + ".onrender.com");
+                    origins.add("http://"  + frontendOrigin + ".onrender.com");
+                }
             }
         }
 
