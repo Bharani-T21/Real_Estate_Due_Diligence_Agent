@@ -57,6 +57,15 @@ public class DueDiligenceController {
     // Report History
     // -----------------------------------------------------------------------
 
+    /** GET /api/due-diligence/reports — list of all reports */
+    @GetMapping("/reports")
+    public ResponseEntity<?> getAllReports(
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "100") int size) {
+        return ResponseEntity.ok(
+                dueDiligenceService.getAllReportHistory(PageRequest.of(page, size)).getContent());
+    }
+
     /** GET /api/due-diligence/history?page=0&size=20 — Admin/System: all reports */
     @GetMapping("/history")
     public ResponseEntity<Page<ReportHistoryDTO>> getAllHistory(
