@@ -42,6 +42,9 @@ public class DataInitializer implements CommandLineRunner {
     private RiskAssessmentRepository riskAssessmentRepository;
 
     @Autowired
+    private ReportHistoryRepository reportHistoryRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Override
@@ -116,11 +119,19 @@ public class DataInitializer implements CommandLineRunner {
         List<Property> allProps = propertyRepository.findAll();
         for (Property prop : allProps) {
             if (prop.getPropertyId() > 4L) {
-                zoningRepository.findByProperty_PropertyId(prop.getPropertyId()).ifPresent(zoningRepository::delete);
-                propertyTaxHistoryRepository.deleteAll(propertyTaxHistoryRepository.findByProperty_PropertyId(prop.getPropertyId()));
-                floodZoneRepository.findByPropertyPropertyId(prop.getPropertyId()).ifPresent(floodZoneRepository::delete);
-                permitRepository.deleteAll(permitRepository.findByPropertyPropertyId(prop.getPropertyId()));
-                propertyRepository.delete(prop);
+                Long pid = prop.getPropertyId();
+                try {
+                    reportHistoryRepository.deleteAll(reportHistoryRepository.findByPropertyPropertyIdOrderByGeneratedAtDesc(pid));
+                    dueDiligenceReportRepository.deleteAll(dueDiligenceReportRepository.findByPropertyPropertyId(pid));
+                    riskAssessmentRepository.deleteAll(riskAssessmentRepository.findByPropertyPropertyId(pid));
+                    zoningRepository.findByProperty_PropertyId(pid).ifPresent(zoningRepository::delete);
+                    propertyTaxHistoryRepository.deleteAll(propertyTaxHistoryRepository.findByProperty_PropertyId(pid));
+                    floodZoneRepository.findByPropertyPropertyId(pid).ifPresent(floodZoneRepository::delete);
+                    permitRepository.deleteAll(permitRepository.findByPropertyPropertyId(pid));
+                    propertyRepository.delete(prop);
+                } catch (Exception e) {
+                    // Suppress constraint issues if already handled
+                }
             }
         }
 
