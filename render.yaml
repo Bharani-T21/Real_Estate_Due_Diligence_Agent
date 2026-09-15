@@ -59,8 +59,8 @@ services:
     plan: free
     region: oregon
     envVars:
-      # Backend hostname for Next.js server-side rewrites (next.config.mjs).
-      # Render fromService gives a bare hostname; next.config.mjs prepends https://.
+      # Backend hostname for the Next.js runtime proxy (src/proxy.js).
+      # Render fromService gives a bare slug/hostname; src/proxy.js prepends https://.
       - key: BACKEND_URL
         fromService:
           name: real-estate-backend

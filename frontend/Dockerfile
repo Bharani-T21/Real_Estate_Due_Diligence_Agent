@@ -11,11 +11,14 @@ RUN npm run build
 
 FROM node:20-alpine AS runner
 WORKDIR /app
-ENV NODE_ENV production
+ENV NODE_ENV=production
+# Runtime only — Render overrides this with fromService BACKEND_URL.
+# Do not ARG/ENV BACKEND_URL in the builder stage; that would bake localhost.
+ENV BACKEND_URL=http://localhost:8080
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 EXPOSE 3000
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 CMD ["node", "server.js"]
