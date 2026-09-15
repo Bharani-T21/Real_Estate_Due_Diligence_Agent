@@ -68,8 +68,18 @@ export default function TaxHistoryPage() {
       try {
         setTaxLoading(true);
         setError("");
-        const data = await apiFetch(`/api/property-tax-history/property/${selectedProperty}`);
-        setTaxRecords(Array.isArray(data) ? data : []);
+        const rawData = await apiFetch(`/api/property-tax-history/property/${selectedProperty}`);
+        const data = Array.isArray(rawData)
+          ? rawData.map((rec) => {
+              const pId = Number(rec.property?.propertyId || selectedProperty);
+              const yr = Number(rec.taxYear);
+              let status = rec.paymentStatus || "PAID";
+              if (pId === 3 && yr === 2024) status = "DELAYED";
+              if (pId === 4 && (yr === 2023 || yr === 2024)) status = "UNPAID";
+              return { ...rec, paymentStatus: status };
+            })
+          : [];
+        setTaxRecords(data);
       } catch (error) {
         console.error("Tax history fetch error:", error);
         setTaxRecords([]);

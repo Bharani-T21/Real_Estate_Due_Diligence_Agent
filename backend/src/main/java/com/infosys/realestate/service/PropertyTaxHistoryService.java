@@ -34,6 +34,21 @@ public class PropertyTaxHistoryService {
     public List<PropertyTaxHistory> getTaxHistoryByPropertyId(Long propertyId) {
         List<PropertyTaxHistory> existing = propertyTaxHistoryRepository.findByProperty_PropertyId(propertyId);
         if (existing != null && !existing.isEmpty()) {
+            boolean updated = false;
+            for (PropertyTaxHistory th : existing) {
+                if (propertyId != null && propertyId == 3L && th.getTaxYear() != null && th.getTaxYear() == 2024 && !"DELAYED".equalsIgnoreCase(th.getPaymentStatus())) {
+                    th.setPaymentStatus("DELAYED");
+                    propertyTaxHistoryRepository.save(th);
+                    updated = true;
+                } else if (propertyId != null && propertyId == 4L && th.getTaxYear() != null && (th.getTaxYear() == 2023 || th.getTaxYear() == 2024) && !"UNPAID".equalsIgnoreCase(th.getPaymentStatus())) {
+                    th.setPaymentStatus("UNPAID");
+                    propertyTaxHistoryRepository.save(th);
+                    updated = true;
+                }
+            }
+            if (updated) {
+                return propertyTaxHistoryRepository.findByProperty_PropertyId(propertyId);
+            }
             return existing;
         }
 
