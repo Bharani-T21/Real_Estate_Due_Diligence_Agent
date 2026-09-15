@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { resolveBackendUrl } from "./lib/backendUrl";
 
 /**
- * Next.js 16 runtime proxy (replaces middleware.js from e7b77500).
+ * Next.js runtime proxy middleware.
  * Forwards /api/* and /auth/* to BACKEND_URL at request time so Docker
  * production does not bake http://localhost:8080 from next.config rewrites.
  */
-export function proxy(request) {
+export function middleware(request) {
   const { pathname, search } = request.nextUrl;
 
   if (pathname.startsWith("/auth") || pathname.startsWith("/api")) {
@@ -17,10 +17,6 @@ export function proxy(request) {
   return NextResponse.next();
 }
 
-export const middleware = proxy;
-export default proxy;
-
 export const config = {
   matcher: ["/auth/:path*", "/api/:path*"],
 };
-
