@@ -13,8 +13,11 @@ import {
   Compass,
   FileCheck,
   Maximize2,
-  Loader2
+  Loader2,
+  Download
 } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import "./zoning.css";
 
 export default function ZoningPage() {
@@ -157,60 +160,106 @@ export default function ZoningPage() {
   const downloadCertificate = () => {
     if (!zoningData) return;
 
-    const certificateContent = `
-ZONING CLASSIFICATION CERTIFICATE
+    const propertyName = zoningData.propertyName || "Property";
+    const propId = zoningData.propertyId ?? "N/A";
+    const address = zoningData.address ?? "N/A";
+    const location = [zoningData.city, zoningData.state].filter(Boolean).join(", ") || "N/A";
 
-Property ID: ${zoningData.propertyId ?? "N/A"}
-Property: ${zoningData.propertyName ?? "N/A"}
+    const doc = new jsPDF();
 
-Address: ${zoningData.address ?? "N/A"}
-City: ${zoningData.city ?? "N/A"}
-State: ${zoningData.state ?? "N/A"}
+    // Header banner
+    doc.setFillColor(15, 23, 42); // slate-900
+    doc.rect(0, 0, 210, 28, "F");
 
-Zoning Category: ${zoningData.zoningCategory ?? "N/A"}
-Zoning Class: ${zoningData.zoningClass ?? "N/A"}
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(255, 255, 255);
+    doc.text("MUNICIPAL ZONING & LAND USE CERTIFICATE", 105, 14, { align: "center" });
 
-Planning Authority: ${zoningData.planningAuthority ?? "N/A"}
-Master Plan: ${zoningData.masterPlan ?? "N/A"}
-Parcel Identifier: ${zoningData.parcelIdentifier ?? "N/A"}
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text("Town & Country Planning Directorate | Urban Development Authority", 105, 22, { align: "center" });
 
-Compliance Status: ${zoningData.complianceStatus ?? "N/A"}
+    // Property Identification Table
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(30, 41, 59);
+    doc.text("Property & Jurisdiction Information", 14, 38);
 
-Max FAR: ${zoningData.maxFar ?? "N/A"}
-Max Height: ${zoningData.maxHeight ?? "N/A"}
-Ground Coverage: ${zoningData.groundCoverage ?? "N/A"}
-Minimum Plot Area: ${zoningData.minPlotArea ?? "N/A"}
-
-Front Setback: ${zoningData.frontSetback ?? "N/A"}
-Rear Setback: ${zoningData.rearSetback ?? "N/A"}
-Left Setback: ${zoningData.leftSetback ?? "N/A"}
-Right Setback: ${zoningData.rightSetback ?? "N/A"}
-
-Permitted Usage:
-${zoningData.permittedUsage ?? "N/A"}
-
-Restricted Usage:
-${zoningData.restrictedUsage ?? "N/A"}
-
-Special Regulations:
-${zoningData.specialRegulations ?? "N/A"}
-`;
-
-    const blob = new Blob([certificateContent], {
-      type: "text/plain"
+    autoTable(doc, {
+      startY: 42,
+      head: [["Attribute", "Record Details"]],
+      body: [
+        ["Property Name", propertyName],
+        ["Property ID", `PROP-#${propId}`],
+        ["Address", address],
+        ["City / State", location],
+        ["Planning Authority", String(zoningData.planningAuthority ?? "Town & Country Planning Department")],
+        ["Master Plan Reference", String(zoningData.masterPlan ?? "Comprehensive Master Plan 2031")],
+        ["Cadastral Parcel ID", String(zoningData.parcelIdentifier ?? `PARCEL-TN-${1000 + Number(propId || 1)}`)],
+        ["Zoning Classification", `${zoningData.zoningCategory ?? "Residential"} (${zoningData.zoningClass ?? "R-1"})`],
+        ["Compliance Status", String(zoningData.complianceStatus ?? "Compliant").toUpperCase()],
+      ],
+      theme: "grid",
+      headStyles: { fillColor: [51, 65, 85], textColor: [255, 255, 255], fontStyle: "bold" },
+      styles: { fontSize: 10, cellPadding: 3.5 },
+      columnStyles: { 0: { fontStyle: "bold", width: 55 } },
     });
 
-    const url = URL.createObjectURL(blob);
+    // Development & Dimensional Standards
+    const finalY1 = (doc.lastAutoTable?.finalY || 100) + 10;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(30, 41, 59);
+    doc.text("Development & Dimensional Standards", 14, finalY1);
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Zoning-Certificate-${zoningData.propertyName || "Property"}.txt`;
+    autoTable(doc, {
+      startY: finalY1 + 4,
+      head: [["Parameter", "Prescribed Limit / Standard", "Parameter", "Prescribed Limit / Standard"]],
+      body: [
+        ["Floor Area Ratio (FAR)", String(zoningData.maxFar ?? "2.0"), "Max Height", String(zoningData.maxHeight ?? "15.0 meters")],
+        ["Ground Coverage", String(zoningData.groundCoverage ?? "60%"), "Min Plot Area", String(zoningData.minPlotArea ?? "2400 sq.ft")],
+        ["Front Setback", String(zoningData.frontSetback ?? "3.0 meters"), "Rear Setback", String(zoningData.rearSetback ?? "2.0 meters")],
+        ["Left Setback", String(zoningData.leftSetback ?? "2.5 meters"), "Right Setback", String(zoningData.rightSetback ?? "2.5 meters")],
+      ],
+      theme: "grid",
+      headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: "bold" },
+      styles: { fontSize: 9, cellPadding: 3.5 },
+    });
 
-    document.body.appendChild(a);
-    a.click();
+    // Land Use Regulations
+    const finalY2 = (doc.lastAutoTable?.finalY || 170) + 10;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(30, 41, 59);
+    doc.text("Land Use Regulations & Covenants", 14, finalY2);
 
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    autoTable(doc, {
+      startY: finalY2 + 4,
+      head: [["Category", "Applicable Regulations & Permitted Activities"]],
+      body: [
+        ["Permitted Usage", String(zoningData.permittedUsage ?? "Single-Family Dwelling, Residential Villa, Home Office")],
+        ["Restricted / Prohibited Usage", String(zoningData.restrictedUsage ?? "Heavy Commercial, Industrial Activity, Hazardous Storage")],
+        ["Special Regulations", String(zoningData.specialRegulations ?? "Residential height and setback covenants active. Environmental rainwater harvesting mandatory.")],
+      ],
+      theme: "grid",
+      headStyles: { fillColor: [71, 85, 105], textColor: [255, 255, 255], fontStyle: "bold" },
+      styles: { fontSize: 9, cellPadding: 4 },
+      columnStyles: { 0: { fontStyle: "bold", width: 50 } },
+    });
+
+    // Verification Footer
+    const footerY = (doc.lastAutoTable?.finalY || 240) + 10;
+    doc.setDrawColor(203, 213, 225);
+    doc.line(14, footerY, 196, footerY);
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 116, 139);
+    doc.text("Official Zoning Classification Certificate generated for Real Estate Due Diligence compliance verification.", 14, footerY + 6);
+    doc.text(`Generated on: ${new Date().toLocaleString("en-IN")} | Real Estate Due Diligence Agent`, 14, footerY + 11);
+
+    doc.save(`Zoning-Report-${propertyName.replace(/[^a-zA-Z0-9_-]/g, "_")}.pdf`);
   };
 
   // --------------------------------------------------

@@ -231,16 +231,41 @@
   border: 1px solid #a7f3d0;
 }
 
-.tax-badge.pending {
+.tax-badge.pending,
+.tax-badge.delayed {
   background: #fffbeb;
   color: #b45309;
   border: 1px solid #fde68a;
 }
 
-.tax-badge.overdue {
+.tax-badge.overdue,
+.tax-badge.unpaid,
+.tax-badge.due {
   background: #fef2f2;
   color: #b91c1c;
   border: 1px solid #fca5a5;
+}
+
+.download-tax-receipt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.download-tax-receipt-btn:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #0f172a;
 }
 
 /* Table View */

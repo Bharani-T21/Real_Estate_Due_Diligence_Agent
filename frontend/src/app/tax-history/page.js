@@ -16,7 +16,10 @@ import {
   Calendar,
   LayoutGrid,
   List,
+  Download,
 } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { apiFetch } from "../../lib/api";
 import "./tax-history.css";
 
@@ -94,7 +97,10 @@ export default function TaxHistoryPage() {
       propertyName.includes(searchTerm.toLowerCase());
 
     const matchesStatus =
-      statusFilter === "all" || status === statusFilter;
+      statusFilter === "all" ||
+      status === statusFilter ||
+      (statusFilter === "unpaid" && (status === "unpaid" || status === "due" || status === "overdue")) ||
+      (statusFilter === "delayed" && (status === "delayed" || status === "pending"));
 
     return matchesSearch && matchesStatus;
   });
@@ -108,11 +114,17 @@ export default function TaxHistoryPage() {
   ).length;
 
   const pendingCount = taxRecords.filter(
-    (record) => String(record.paymentStatus).toLowerCase() === "pending"
+    (record) => {
+      const s = String(record.paymentStatus).toLowerCase();
+      return s === "pending" || s === "delayed";
+    }
   ).length;
 
   const overdueCount = taxRecords.filter(
-    (record) => String(record.paymentStatus).toLowerCase() === "overdue"
+    (record) => {
+      const s = String(record.paymentStatus).toLowerCase();
+      return s === "overdue" || s === "unpaid" || s === "due";
+    }
   ).length;
 
   const complianceClear =
@@ -123,34 +135,108 @@ export default function TaxHistoryPage() {
       record.property?.propertyName ||
       selectedPropertyData?.propertyName ||
       "Property";
+    const propId = record.property?.propertyId || selectedPropertyData?.propertyId || selectedProperty || "N/A";
+    const address = selectedPropertyData?.address || "N/A";
+    const location = [selectedPropertyData?.city, selectedPropertyData?.state].filter(Boolean).join(", ") || "N/A";
+    const status = String(record.paymentStatus || "PAID").toUpperCase();
 
-    const receiptContent = `
-PROPERTY TAX HISTORY
-================================
+    const doc = new jsPDF();
 
-Property Name : ${propertyName}
-Property ID   : ${record.property?.propertyId || selectedProperty}
+    // Header banner
+    doc.setFillColor(37, 99, 235);
+    doc.rect(0, 0, 210, 28, "F");
 
-Tax History ID : ${record.taxHistoryId}
-Tax Year       : ${record.taxYear}
-Tax Amount     : ₹${Number(record.taxAmount || 0).toLocaleString("en-IN")}
-Payment Status : ${record.paymentStatus}
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(255, 255, 255);
+    doc.text("PROPERTY TAX PAYMENT RECEIPT", 105, 14, { align: "center" });
 
-This is a generated property tax history record.
-`;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text("Municipal Revenue & Property Tax Department", 105, 22, { align: "center" });
 
-    const blob = new Blob([receiptContent], {
-      type: "text/plain;charset=utf-8",
+    // Property Information Box
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(30, 41, 59);
+    doc.text("Property Information", 14, 38);
+
+    autoTable(doc, {
+      startY: 42,
+      head: [["Field", "Property Details"]],
+      body: [
+        ["Property Name", propertyName],
+        ["Property ID", `PROP-#${propId}`],
+        ["Address", address],
+        ["City / State", location],
+        ["Property Type", selectedPropertyData?.propertyType || "Residential"],
+      ],
+      theme: "grid",
+      headStyles: { fillColor: [71, 85, 105], textColor: [255, 255, 255], fontStyle: "bold" },
+      styles: { fontSize: 10, cellPadding: 4 },
+      columnStyles: { 0: { fontStyle: "bold", width: 45 } },
     });
 
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `Tax-History-${record.taxHistoryId}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Tax Assessment Details
+    const finalY = (doc.lastAutoTable?.finalY || 80) + 10;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(30, 41, 59);
+    doc.text("Tax Assessment & Payment Record", 14, finalY);
+
+    const taxAmountFormatted = `Rs. ${Number(record.taxAmount || 0).toLocaleString("en-IN")}`;
+
+    autoTable(doc, {
+      startY: finalY + 4,
+      head: [["Tax Assessment Field", "Recorded Value"]],
+      body: [
+        ["Tax History Reference ID", `TX-${record.taxHistoryId || "001"}`],
+        ["Assessment Financial Year", `FY ${record.taxYear}`],
+        ["Annual Property Tax Assessed", taxAmountFormatted],
+        ["Payment Compliance Status", status],
+        ["Receipt Generation Date", new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })],
+      ],
+      theme: "grid",
+      headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: "bold" },
+      styles: { fontSize: 10, cellPadding: 4 },
+      columnStyles: { 0: { fontStyle: "bold", width: 60 } },
+    });
+
+    // Summary Table of All Recorded Years
+    const tableY = (doc.lastAutoTable?.finalY || 140) + 10;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(30, 41, 59);
+    doc.text("Four-Year Historical Assessment Overview", 14, tableY);
+
+    const historyRows = (taxRecords && taxRecords.length > 0 ? taxRecords : [record]).map((r) => [
+      `FY ${r.taxYear}`,
+      `TX-${r.taxHistoryId || "-"}`,
+      `Rs. ${Number(r.taxAmount || 0).toLocaleString("en-IN")}`,
+      String(r.paymentStatus || "").toUpperCase(),
+    ]);
+
+    autoTable(doc, {
+      startY: tableY + 4,
+      head: [["Financial Year", "Reference ID", "Tax Amount", "Status"]],
+      body: historyRows,
+      theme: "striped",
+      headStyles: { fillColor: [51, 65, 85], textColor: [255, 255, 255], fontStyle: "bold" },
+      styles: { fontSize: 9, cellPadding: 3 },
+    });
+
+    // Verification Footer
+    const footerY = (doc.lastAutoTable?.finalY || 220) + 12;
+    doc.setDrawColor(203, 213, 225);
+    doc.line(14, footerY, 196, footerY);
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 116, 139);
+    doc.text("This document is an electronically generated municipal tax verification receipt. Valid without physical signature.", 14, footerY + 6);
+    doc.text(`Generated on ${new Date().toLocaleString("en-IN")} | Real Estate Due Diligence Agent`, 14, footerY + 11);
+
+    doc.save(`Tax-Receipt-${propertyName.replace(/[^a-zA-Z0-9_-]/g, "_")}-FY${record.taxYear}.pdf`);
   };
 
   if (loading) {
@@ -342,6 +428,8 @@ This is a generated property tax history record.
               >
                 <option value="all">All Statuses</option>
                 <option value="paid">Paid</option>
+                <option value="delayed">Delayed</option>
+                <option value="unpaid">Due / Unpaid</option>
                 <option value="pending">Pending</option>
                 <option value="overdue">Overdue</option>
               </select>
@@ -387,34 +475,26 @@ This is a generated property tax history record.
                       return (
                         <tr key={record.taxHistoryId}>
                           <td className="year-cell">FY {record.taxYear}</td>
-                          <td>{record.taxHistoryId}</td>
+                          <td>TX-{record.taxHistoryId}</td>
                           <td className="amount-cell">
                             ₹{Number(record.taxAmount || 0).toLocaleString("en-IN")}
                           </td>
                           <td>
                             <span className={`tax-badge ${status}`}>
                               {status === "paid" && <CheckCircle2 size={12} />}
-                              {status === "pending" && <Clock size={12} />}
-                              {status === "overdue" && <AlertTriangle size={12} />}
+                              {(status === "delayed" || status === "pending") && <Clock size={12} />}
+                              {(status === "unpaid" || status === "due" || status === "overdue") && <AlertTriangle size={12} />}
                               {record.paymentStatus}
                             </span>
                           </td>
                           <td>{record.property?.propertyName || selectedPropertyData?.propertyName}</td>
                           <td>
                             <button
+                              className="download-tax-receipt-btn"
                               onClick={() => downloadReceipt(record)}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "4px",
-                                padding: "6px 12px",
-                                borderRadius: "6px",
-                                border: "1px solid #cbd5e1",
-                                background: "white",
-                                cursor: "pointer",
-                              }}
+                              title="Download Official Tax Receipt (PDF)"
                             >
-                              <Printer size={14} /> Receipt
+                              <Download size={14} /> Download Tax Receipt
                             </button>
                           </td>
                         </tr>

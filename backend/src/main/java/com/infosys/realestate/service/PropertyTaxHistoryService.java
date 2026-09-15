@@ -46,10 +46,15 @@ public class PropertyTaxHistoryService {
         List<PropertyTaxHistory> seeded = new java.util.ArrayList<>();
         double baseTax = 4200.0 + (propertyId * 350.0);
 
-        PropertyTaxHistory t2021 = new PropertyTaxHistory(null, 2021, Math.round(baseTax * 100.0) / 100.0, "PAID", property);
-        PropertyTaxHistory t2022 = new PropertyTaxHistory(null, 2022, Math.round((baseTax * 1.06) * 100.0) / 100.0, "PAID", property);
-        PropertyTaxHistory t2023 = new PropertyTaxHistory(null, 2023, Math.round((baseTax * 1.12) * 100.0) / 100.0, "PAID", property);
-        PropertyTaxHistory t2024 = new PropertyTaxHistory(null, 2024, Math.round((baseTax * 1.18) * 100.0) / 100.0, "PAID", property);
+        String s2021 = "PAID";
+        String s2022 = "PAID";
+        String s2023 = (propertyId == 4) ? "UNPAID" : "PAID";
+        String s2024 = (propertyId == 3) ? "DELAYED" : (propertyId == 4) ? "UNPAID" : "PAID";
+
+        PropertyTaxHistory t2021 = new PropertyTaxHistory(null, 2021, Math.round(baseTax * 100.0) / 100.0, s2021, property);
+        PropertyTaxHistory t2022 = new PropertyTaxHistory(null, 2022, Math.round((baseTax * 1.06) * 100.0) / 100.0, s2022, property);
+        PropertyTaxHistory t2023 = new PropertyTaxHistory(null, 2023, Math.round((baseTax * 1.12) * 100.0) / 100.0, s2023, property);
+        PropertyTaxHistory t2024 = new PropertyTaxHistory(null, 2024, Math.round((baseTax * 1.18) * 100.0) / 100.0, s2024, property);
 
         seeded.add(propertyTaxHistoryRepository.save(t2021));
         seeded.add(propertyTaxHistoryRepository.save(t2022));

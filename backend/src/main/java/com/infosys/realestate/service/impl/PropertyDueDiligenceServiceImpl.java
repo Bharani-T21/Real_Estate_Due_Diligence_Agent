@@ -235,6 +235,7 @@ public class PropertyDueDiligenceServiceImpl implements PropertyDueDiligenceServ
 
         if (r.getProperty() != null) {
             dto.setPropertyId(r.getProperty().getPropertyId());
+            dto.setPropertyName(r.getProperty().getPropertyName());
             dto.setPropertyAddress(r.getProperty().getAddress());
             dto.setPropertyCity(r.getProperty().getCity());
             dto.setPropertyState(r.getProperty().getState());

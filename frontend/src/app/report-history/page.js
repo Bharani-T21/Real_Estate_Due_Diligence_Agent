@@ -41,26 +41,21 @@ export default function ReportHistory() {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiFetch("/api/due-diligence/reports");
-      if (Array.isArray(data) && data.length > 0) {
+      let data;
+      try {
+        data = await apiFetch("/api/due-diligence/reports");
+      } catch (e1) {
+        data = await apiFetch("/api/report-history");
+      }
+      if (Array.isArray(data)) {
         setReports(data);
       } else {
-        // Fallback fallback report entries if DB reports are not present yet
-        setReports([
-          { id: 1, reportId: "REP-001", propertyId: 1, propertyName: "Luxury Villa", city: "Chennai", state: "Tamil Nadu", status: "COMPLETED", riskScore: 98, riskLevel: "LOW", createdAt: "2026-08-08T10:00:00Z" },
-          { id: 2, reportId: "REP-002", propertyId: 2, propertyName: "Modern Apartment", city: "Bangalore", state: "Karnataka", status: "COMPLETED", riskScore: 90, riskLevel: "LOW", createdAt: "2026-08-08T11:00:00Z" },
-          { id: 3, reportId: "REP-003", propertyId: 3, propertyName: "Independent House", city: "Coimbatore", state: "Tamil Nadu", status: "COMPLETED", riskScore: 65, riskLevel: "CONCERNS_FOUND", createdAt: "2026-08-08T12:00:00Z" },
-          { id: 4, reportId: "REP-004", propertyId: 4, propertyName: "Premium Flat", city: "Hyderabad", state: "Telangana", status: "COMPLETED", riskScore: 32, riskLevel: "HIGH_RISK", createdAt: "2026-08-08T13:00:00Z" },
-        ]);
+        setReports([]);
       }
     } catch (err) {
       console.warn("Backend report history fetch error:", err.message);
-      setReports([
-        { id: 1, reportId: "REP-001", propertyId: 1, propertyName: "Luxury Villa", city: "Chennai", state: "Tamil Nadu", status: "COMPLETED", riskScore: 98, riskLevel: "LOW", createdAt: "2026-08-08T10:00:00Z" },
-        { id: 2, reportId: "REP-002", propertyId: 2, propertyName: "Modern Apartment", city: "Bangalore", state: "Karnataka", status: "COMPLETED", riskScore: 90, riskLevel: "LOW", createdAt: "2026-08-08T11:00:00Z" },
-        { id: 3, reportId: "REP-003", propertyId: 3, propertyName: "Independent House", city: "Coimbatore", state: "Tamil Nadu", status: "COMPLETED", riskScore: 65, riskLevel: "CONCERNS_FOUND", createdAt: "2026-08-08T12:00:00Z" },
-        { id: 4, reportId: "REP-004", propertyId: 4, propertyName: "Premium Flat", city: "Hyderabad", state: "Telangana", status: "COMPLETED", riskScore: 32, riskLevel: "HIGH_RISK", createdAt: "2026-08-08T13:00:00Z" },
-      ]);
+      setReports([]);
+      setError("Unable to load report history from backend.");
     } finally {
       setLoading(false);
     }
@@ -79,16 +74,35 @@ export default function ReportHistory() {
     });
   };
 
-  const filteredReports = reports.filter(
-    (report) =>
-      (report.propertyName && report.propertyName.toLowerCase().includes(search.toLowerCase())) ||
-      (report.reportId && report.reportId.toLowerCase().includes(search.toLowerCase())) ||
-      (report.city && report.city.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filteredReports = reports.filter((report) => {
+    if (!search || !search.trim()) return true;
+    const q = search.toLowerCase().trim();
+    const propName = String(report.propertyName || report.property?.propertyName || "").toLowerCase();
+    const reportId = String(report.reportId || `REP-${report.id || ""}`).toLowerCase();
+    const city = String(report.city || report.propertyCity || "").toLowerCase();
+    const state = String(report.state || report.propertyState || "").toLowerCase();
+    const propId = String(report.propertyId || report.property?.propertyId || "");
+    const status = String(report.status || "").toLowerCase();
+    const date = formatDate(report.createdAt).toLowerCase();
+    const riskLevel = String(report.riskLevel || "").toLowerCase();
+    const riskScore = String(report.riskScore ?? "");
 
-  const completedCount = reports.filter((r) => r.status === "COMPLETED" || r.status === "Completed").length;
-  const pendingCount = reports.filter((r) => r.status === "IN_PROGRESS" || r.status === "Pending").length;
-  const failedCount = reports.filter((r) => r.status === "FAILED" || r.status === "Failed").length;
+    return (
+      propName.includes(q) ||
+      reportId.includes(q) ||
+      city.includes(q) ||
+      state.includes(q) ||
+      propId === q ||
+      status.includes(q) ||
+      date.includes(q) ||
+      riskLevel.includes(q) ||
+      riskScore === q
+    );
+  });
+
+  const completedCount = reports.filter((r) => String(r.status).toUpperCase() === "COMPLETED").length;
+  const pendingCount = reports.filter((r) => String(r.status).toUpperCase() === "IN_PROGRESS" || String(r.status).toUpperCase() === "PENDING").length;
+  const failedCount = reports.filter((r) => String(r.status).toUpperCase() === "FAILED").length;
 
   return (
     <ProtectedRoute>

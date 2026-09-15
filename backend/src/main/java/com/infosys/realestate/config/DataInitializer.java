@@ -189,22 +189,50 @@ public class DataInitializer implements CommandLineRunner {
             // 2. Seed Tax History if not exists
             if (propertyTaxHistoryRepository.findByProperty_PropertyId(pid).isEmpty()) {
                 double baseTax = 4200.0 + (pid * 350.0);
-                propertyTaxHistoryRepository.save(new PropertyTaxHistory(null, 2021, Math.round(baseTax * 100.0) / 100.0, "PAID", prop));
-                propertyTaxHistoryRepository.save(new PropertyTaxHistory(null, 2022, Math.round((baseTax * 1.06) * 100.0) / 100.0, "PAID", prop));
-                propertyTaxHistoryRepository.save(new PropertyTaxHistory(null, 2023, Math.round((baseTax * 1.12) * 100.0) / 100.0, "PAID", prop));
-                propertyTaxHistoryRepository.save(new PropertyTaxHistory(null, 2024, Math.round((baseTax * 1.18) * 100.0) / 100.0, "PAID", prop));
+                String s2021 = "PAID";
+                String s2022 = "PAID";
+                String s2023 = (pid == 4L) ? "UNPAID" : "PAID";
+                String s2024 = (pid == 3L) ? "DELAYED" : (pid == 4L) ? "UNPAID" : "PAID";
+
+                propertyTaxHistoryRepository.save(new PropertyTaxHistory(null, 2021, Math.round(baseTax * 100.0) / 100.0, s2021, prop));
+                propertyTaxHistoryRepository.save(new PropertyTaxHistory(null, 2022, Math.round((baseTax * 1.06) * 100.0) / 100.0, s2022, prop));
+                propertyTaxHistoryRepository.save(new PropertyTaxHistory(null, 2023, Math.round((baseTax * 1.12) * 100.0) / 100.0, s2023, prop));
+                propertyTaxHistoryRepository.save(new PropertyTaxHistory(null, 2024, Math.round((baseTax * 1.18) * 100.0) / 100.0, s2024, prop));
             }
 
             // 3. Seed Flood Zone if not exists
             if (floodZoneRepository.findByPropertyPropertyId(pid).isEmpty()) {
                 FloodZone fz = new FloodZone();
                 fz.setProperty(prop);
-                fz.setZone("Zone X (Minimal Risk)");
-                fz.setBaseFloodElevation(12.5);
-                fz.setInsuranceRequired(false);
-                fz.setNearestWaterBody("Municipal Drainage Channel / Lake");
-                fz.setDistanceToWaterBody(1.8);
-                fz.setFemaPanel("FEMA-MAP-48201C" + (1000 + pid));
+                if (pid == 1L) {
+                    fz.setZone("Zone X (Minimal Risk)");
+                    fz.setBaseFloodElevation(14.5);
+                    fz.setInsuranceRequired(false);
+                    fz.setNearestWaterBody("Municipal Drainage Channel / Lake");
+                    fz.setDistanceToWaterBody(1.8);
+                    fz.setFemaPanel("FEMA-MAP-48201C1001");
+                } else if (pid == 2L) {
+                    fz.setZone("Zone X (Shaded - Low Risk)");
+                    fz.setBaseFloodElevation(12.0);
+                    fz.setInsuranceRequired(false);
+                    fz.setNearestWaterBody("Bellandur Stormwater Basin");
+                    fz.setDistanceToWaterBody(1.2);
+                    fz.setFemaPanel("FEMA-MAP-48201C1002");
+                } else if (pid == 3L) {
+                    fz.setZone("Zone AE (Moderate Flood Risk)");
+                    fz.setBaseFloodElevation(8.5);
+                    fz.setInsuranceRequired(true);
+                    fz.setNearestWaterBody("Noyyal River Tributary Channel");
+                    fz.setDistanceToWaterBody(0.4);
+                    fz.setFemaPanel("FEMA-MAP-48201C1003");
+                } else {
+                    fz.setZone("Zone VE (High Risk River Basin)");
+                    fz.setBaseFloodElevation(4.2);
+                    fz.setInsuranceRequired(true);
+                    fz.setNearestWaterBody("Musi River Basin & Wetland Buffer");
+                    fz.setDistanceToWaterBody(0.08);
+                    fz.setFemaPanel("FEMA-MAP-48201C1004");
+                }
                 floodZoneRepository.save(fz);
             }
 

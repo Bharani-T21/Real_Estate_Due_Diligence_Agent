@@ -340,6 +340,27 @@ export default function PropertiesPage() {
     return <MapPinned size={16} />;
   };
 
+  const BASELINE_PROPERTY_SCORES = {
+    1: { score: 98, level: "LOW" },
+    2: { score: 90, level: "LOW" },
+    3: { score: 65, level: "MEDIUM" },
+    4: { score: 32, level: "HIGH" },
+  };
+
+  const getPropertyRiskInfo = (property) => {
+    if (property?.riskScore != null) {
+      const score = Number(property.riskScore);
+      const level =
+        property.riskLevel ||
+        (score >= 80 ? "LOW" : score >= 50 ? "MEDIUM" : "HIGH");
+      return { score, level };
+    }
+    const pid = Number(property?.propertyId);
+    return (
+      BASELINE_PROPERTY_SCORES[pid] || { score: 98, level: "LOW" }
+    );
+  };
+
   return (
     <ProtectedRoute>
       <div
@@ -440,51 +461,59 @@ export default function PropertiesPage() {
                 <div className="property-grid">
 
                   {filteredProperties.map(
-                    (property, index) => (
+                    (property, index) => {
+                      const riskInfo = getPropertyRiskInfo(property);
+                      const scoreClass =
+                        riskInfo.score >= 80
+                          ? "score-low-risk"
+                          : riskInfo.score >= 50
+                          ? "score-medium-risk"
+                          : "score-high-risk";
 
-                      <div
-                        key={property.propertyId}
-                        className="property-card"
-                      >
+                      return (
+                        <div
+                          key={property.propertyId}
+                          className="property-card"
+                        >
 
-                        {/* IMAGE */}
+                          {/* IMAGE */}
 
-                        <div className="property-image-container">
+                          <div className="property-image-container">
 
-                          <img
-                            src={getPropertyImage(
-                              property,
-                              index
-                            )}
-                            alt={
-                              property.propertyName ||
-                              "Property"
-                            }
-                          />
+                            <img
+                              src={getPropertyImage(
+                                property,
+                                index
+                              )}
+                              alt={
+                                property.propertyName ||
+                                "Property"
+                              }
+                            />
 
-                          <span className="status-badge verified">
-                            <ShieldCheck size={14} />
-                            Verified Property
-                          </span>
-
-                        </div>
-
-                        {/* CONTENT */}
-
-                        <div className="property-content">
-
-                          <div className="property-header-row">
-
-                            <h3>
-                              {property.propertyName ||
-                                "Property"}
-                            </h3>
-
-                            <span className="due-diligence-score score-low-risk">
-                              #{property.propertyId}
+                            <span className="status-badge verified">
+                              <ShieldCheck size={14} />
+                              Verified Property
                             </span>
 
                           </div>
+
+                          {/* CONTENT */}
+
+                          <div className="property-content">
+
+                            <div className="property-header-row">
+
+                              <h3>
+                                {property.propertyName ||
+                                  "Property"}
+                              </h3>
+
+                              <span className={`due-diligence-score ${scoreClass}`}>
+                                {riskInfo.score} / 100
+                              </span>
+
+                            </div>
 
                           {/* LOCATION */}
 
@@ -607,8 +636,8 @@ export default function PropertiesPage() {
                         </div>
 
                       </div>
-                    )
-                  )}
+                    );
+                  })}
 
                 </div>
 
