@@ -828,8 +828,87 @@ export default function PermitsEnvironmentalPage() {
   };
 
   // =========================================================
-  // RENDER
+  // ENVIRONMENTAL DATA MAPPING (DERIVED FROM SELECTED PROPERTY)
   // =========================================================
+
+  const getEnvironmentalData = (propertyId) => {
+    const pid = Number(propertyId);
+    if (pid === 1) {
+      return {
+        risk: "LOW",
+        title: "CRZ & Coastal Zone Compliant",
+        score: "98 / 100",
+        observations: [
+          { t: "Soil & Groundwater Quality", d: "No historical hazardous chemical usage or contamination detected on site.", s: "clean" },
+          { t: "Wetland & Coastal Buffer", d: "Site strictly adheres to Coastal Regulation Zone (CRZ) guidelines.", s: "clean" },
+          { t: "Air Quality & Ambient Noise", d: "Residential ambient air quality standards fully met.", s: "clean" },
+        ],
+        compliance: [
+          { t: "State Pollution Control Board NOC", d: "Consent to Operate & SPCB clearance verified active.", s: "compliant" },
+          { t: "Rainwater Harvesting & Drainage", d: "Dual percolation pits and stormwater harvesting certified.", s: "compliant" },
+        ],
+      };
+    } else if (pid === 2) {
+      return {
+        risk: "LOW",
+        title: "Urban Residential Clearance Verified",
+        score: "90 / 100",
+        observations: [
+          { t: "Sewage & Effluent Discharge", d: "Operational in-house STP with treated water recycling system.", s: "clean" },
+          { t: "Drainage Buffer Compliance", d: "Primary stormwater runoff connection certified compliant.", s: "clean" },
+          { t: "Solid Waste Management", d: "Segregated waste processing facility active.", s: "clean" },
+        ],
+        compliance: [
+          { t: "Pollution Board Consent Certificate", d: "Municipal environmental consent renewed.", s: "compliant" },
+          { t: "Green Cover & Tree Preservation", d: "15% open green canopy requirement fulfilled.", s: "compliant" },
+        ],
+      };
+    } else if (pid === 3) {
+      return {
+        risk: "CONCERNS_FOUND",
+        title: "Municipal Drainage & Buffer Review",
+        score: "65 / 100",
+        observations: [
+          { t: "Drainage Channel Proximity", d: "Secondary drainage buffer boundary requires updated municipal verification.", s: "caution" },
+          { t: "Groundwater Extraction", d: "Borewell extraction permit under routine municipal renewal.", s: "caution" },
+          { t: "Air Quality & Ecology", d: "Standard residential ambient parameters observed.", s: "clean" },
+        ],
+        compliance: [
+          { t: "Stormwater Buffer Clearance", d: "Pending final re-survey certificate from municipal authority.", s: "caution" },
+          { t: "Tree Preservation Mandate", d: "Compliance report submitted to forestry cell.", s: "compliant" },
+        ],
+      };
+    } else if (pid === 4) {
+      return {
+        risk: "HIGH_RISK",
+        title: "Wetland Buffer Zone Encroachment",
+        score: "32 / 100",
+        observations: [
+          { t: "Wetland / Lake Buffer Zone", d: "Encroachment into 30m lake buffer zone identified in master plan.", s: "danger" },
+          { t: "Environmental Tribunal Notice", d: "Active stop-work / penalty notice from State Pollution Board.", s: "danger" },
+          { t: "Effluent Management", d: "STP discharge non-compliant with pollution control norms.", s: "danger" },
+        ],
+        compliance: [
+          { t: "Pollution Control Board Clearance", d: "NOC revoked due to buffer non-compliance.", s: "danger" },
+          { t: "Wetland Restoration Directive", d: "Corrective setback restructuring mandated by tribunal.", s: "danger" },
+        ],
+      };
+    }
+    return {
+      risk: "LOW",
+      title: "Standard Environmental Assessment",
+      score: "85 / 100",
+      observations: [
+        { t: "Soil & Groundwater Quality", d: "Standard environmental audit passed.", s: "clean" },
+        { t: "Drainage & Buffers", d: "Municipal setbacks compliant.", s: "clean" },
+      ],
+      compliance: [
+        { t: "Environmental Clearances", d: "Local authority permissions active.", s: "compliant" },
+      ],
+    };
+  };
+
+  const envData = getEnvironmentalData(selectedProperty);
 
   return (
     <ProtectedRoute>
@@ -975,36 +1054,43 @@ export default function PermitsEnvironmentalPage() {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "40px", marginBottom: "30px" }}>
                   <div>
                     <h3 style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "10px", color: "#334155" }}>Property Information</h3>
-                    <p><strong>Property Name:</strong> {activeProp.name}</p>
+                    <p><strong>Property Name:</strong> {selectedPropertyData.propertyName || `Property ${selectedProperty}`}</p>
+                    <p><strong>Address:</strong> {[selectedPropertyData.address, selectedPropertyData.city, selectedPropertyData.state].filter(Boolean).join(", ") || "N/A"}</p>
+                    <p><strong>Property Type:</strong> {selectedPropertyData.propertyType || "Residential"}</p>
                   </div>
                   <div>
                     <h3 style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "10px", color: "#334155" }}>Overall Status</h3>
-                    <p><strong>Environmental Risk:</strong> {activeProp.env.risk} ({activeProp.env.title})</p>
-                    <p><strong>ESA Score:</strong> {activeProp.env.score}</p>
+                    <p><strong>Environmental Risk:</strong> {envData.risk} ({envData.title})</p>
+                    <p><strong>ESA Score:</strong> {envData.score}</p>
+                    <p><strong>Building Permits:</strong> {approvedPermits} / {permits.length} Approved</p>
                   </div>
                 </div>
 
                 <div style={{ marginBottom: "30px" }}>
                   <h3 style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "10px", color: "#334155" }}>Building Permits & Clearances</h3>
-                  {activeProp.permits.map((p, i) => (
-                    <div key={i} style={{ border: "1px solid #e2e8f0", borderRadius: "8px", padding: "15px", marginBottom: "15px", background: "#f8fafc" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
-                        <h4 style={{ margin: 0, color: "#0f172a" }}>{p.type}</h4>
-                        <span style={{ padding: "4px 8px", background: p.status === "approved" ? "#dcfce7" : p.status === "rejected" ? "#fee2e2" : "#fef9c3", color: p.status === "approved" ? "#166534" : p.status === "rejected" ? "#991b1b" : "#854d0e", borderRadius: "4px", fontSize: "12px", fontWeight: "bold", textTransform: "uppercase" }}>{p.status}</span>
+                  {permits.length === 0 ? (
+                    <p style={{ color: "#64748b", fontStyle: "italic" }}>No building permits on record for this property.</p>
+                  ) : (
+                    permits.map((p, i) => (
+                      <div key={i} style={{ border: "1px solid #e2e8f0", borderRadius: "8px", padding: "15px", marginBottom: "15px", background: "#f8fafc" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
+                          <h4 style={{ margin: 0, color: "#0f172a" }}>{p.permitType || p.type || "Building Permit"}</h4>
+                          <span style={{ padding: "4px 8px", background: String(p.status || "").toUpperCase() === "APPROVED" ? "#dcfce7" : String(p.status || "").toUpperCase() === "REJECTED" ? "#fee2e2" : "#fef9c3", color: String(p.status || "").toUpperCase() === "APPROVED" ? "#166534" : String(p.status || "").toUpperCase() === "REJECTED" ? "#991b1b" : "#854d0e", borderRadius: "4px", fontSize: "12px", fontWeight: "bold", textTransform: "uppercase" }}>{p.status || "APPROVED"}</span>
+                        </div>
+                        <p style={{ margin: "0 0 5px 0", fontSize: "14px" }}><strong>Permit Number:</strong> {p.permitNumber || p.id || "—"} | <strong>Authority:</strong> {p.authority || "Municipal Authority"}</p>
+                        <p style={{ margin: "0 0 5px 0", fontSize: "14px" }}><strong>Applicant / Contractor:</strong> {p.contractor || "Apex Structural Engineering"}</p>
+                        <p style={{ margin: "0 0 5px 0", fontSize: "14px" }}><strong>Issued / Approved:</strong> {p.issueDate || "—"} | {p.approvalDate || "—"}</p>
+                        <p style={{ margin: "5px 0 0 0", fontSize: "14px", fontStyle: "italic", color: "#475569" }}>Remarks: {p.notes || "Foundation, structural frame, and MEP systems verified compliant."}</p>
                       </div>
-                      <p style={{ margin: "0 0 5px 0", fontSize: "14px" }}><strong>ID:</strong> {p.id} | <strong>Authority:</strong> {p.authority}</p>
-                      <p style={{ margin: "0 0 5px 0", fontSize: "14px" }}><strong>Applicant/Contractor:</strong> {p.contractor}</p>
-                      <p style={{ margin: "0 0 5px 0", fontSize: "14px" }}><strong>Filed:</strong> {p.issueDate} | <strong>Decision:</strong> {p.approvalDate}</p>
-                      <p style={{ margin: "5px 0 0 0", fontSize: "14px", fontStyle: "italic", color: "#475569" }}>Remarks: {p.notes}</p>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
 
                 <div style={{ marginBottom: "30px" }}>
                   <h3 style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "10px", color: "#334155" }}>Environmental Assessment Findings (ESA)</h3>
                   <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}>
                     <tbody>
-                      {activeProp.env.observations.map((f, i) => (
+                      {envData.observations.map((f, i) => (
                         <tr key={i}>
                           <td style={{ padding: "12px", border: "1px solid #e2e8f0", background: "#fff", width: "30%", fontWeight: "bold" }}>{f.t}</td>
                           <td style={{ padding: "12px", border: "1px solid #e2e8f0", background: "#fff", width: "50%" }}>{f.d}</td>
@@ -1019,7 +1105,7 @@ export default function PermitsEnvironmentalPage() {
                   <h3 style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "10px", color: "#334155" }}>Compliance Actions</h3>
                   <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}>
                     <tbody>
-                      {activeProp.env.compliance.map((c, i) => (
+                      {envData.compliance.map((c, i) => (
                         <tr key={i}>
                           <td style={{ padding: "12px", border: "1px solid #e2e8f0", background: "#fff", width: "30%", fontWeight: "bold" }}>{c.t}</td>
                           <td style={{ padding: "12px", border: "1px solid #e2e8f0", background: "#fff", width: "50%" }}>{c.d}</td>
